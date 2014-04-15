@@ -1,6 +1,10 @@
 structureJS
 ===========
 
+This 11kB (uncompressed) program allows you to break up complex Javacript apps into multiple files and reusable modules. It handles the complexity of making sure your files are imported in the right order. Use a manifest to modify the entire structure of you app in one file. 
+
+If you write Javascript applications and you want a simple, lightweight way to efficiently organize your code give it a try
+
 ### Why I Made structureJS ###
 
 Having a complex app is one big file is a terrible idea but Javascript was not really designed to build complex apps so there is no native support for importing files. You have to import scripts using `script` tags and the files themselves are imported asynchronously. This means you can not be sure that a script declared first will actually be done importing first. If you have a script declared underneath the first one that is supposed to use parts of the first one you're screwed.
