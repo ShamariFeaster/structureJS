@@ -7,7 +7,7 @@ If you write Javascript applications and you want a simple, lightweight way to e
 
 ### Why I Made structureJS ###
 
-Having a complex app is one big file is a terrible idea but Javascript was not really designed to build complex apps so there is no native support for importing files. You have to import scripts using `script` tags and the files themselves are imported asynchronously. This means you can not be sure that a script declared first will actually be done importing first. If you have a script declared underneath the first one that is supposed to use parts of the first one you're screwed.
+Having a complex app as one big file is a terrible idea but Javascript was not really designed to build complex apps so there is no native support for importing files. You have to import scripts using `script` tags and the files themselves are imported asynchronously. This means you can not be sure that a script declared first will actually be done importing first. If you have a script declared underneath the first one that is supposed to use parts of the first one you're screwed.
 
 ### How Do I Use It ###
 
