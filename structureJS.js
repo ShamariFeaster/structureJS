@@ -226,25 +226,62 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     this.loadModules(this.config);
   },
   /*
-    TODO: error handling if no modName or moduleFunc is not function
+    the idea behind the 'amd' and '_call' aliases of require function
+    is that it allows user to put semantic meaning into their requires.
+    _class being reserved for modules that have constructors. The config object
+    allows users to set a type. This is again purely for semantics. if the module 
+    is to be used in a specific design pattern, subject/observer for example, the 
+    module writter can document the module's role inside the code.
   */
-  module : function(modName, moduleFunc){
+  module : function(modConfig, /*function*/ executeModule){
+    if(typeof modConfig == 'undefined' || typeof modConfig === 'function')
+      throw 'Module Must Have Configuration Object Or Name String';
+    if(typeof executeModule !== 'function')
+      throw 'Module Must Have A Function As It\'s Definition';
+      
     var _this = this;
-    var require = function(depName){
-      var module = _this._modules[depName];
-      return module;
+    var modName = null;
+    var moduleWrapper = {type : 'unknown'};
+    
+    if(typeof modConfig === 'string')
+      modName = modConfig;
+    else if(typeof modConfig === 'object'){
+      if(typeof modConfig.name == 'undefined')
+        throw 'Module Configuration Object Must Have Name Property';
+      else
+        modName =  modConfig.name;
+        
+      if(typeof modConfig.type != 'undefined')
+        moduleWrapper['type'] = modConfig.type;
+    }
+    function require(depName){
+      return _this._modules[depName]['module'];
+    };
+    /*aliases that let user's add semantic meaning to thier require calls*/
+    require.amd = require;
+    require._class = require;
+    /*Introspection function of require obj*/
+    require.getType = function(depName){
+      return _this._modules[depName]['type'];
     }
     /*Put the return val of the module function into modules object
     so they can be retrieved later using 'require'*/
-    this._modules[modName] = moduleFunc.call(null, require);
+    moduleWrapper['module'] = executeModule.call(null, require); 
+    if(typeof moduleWrapper['module'] == 'undefined')
+      throw 'Module Function Definition Must Return Something';
+    
+    this._modules[modName] = moduleWrapper;
+    //console.log(this._modules[modName]);
+    
   },
-  moduleAMD : function(modName, moduleFunc){
-    var _this = this;
-    /*Supports jQuery AMD by recognizing and calling init function
-    that jquery passes to use using AMD-spec define.
-    FYI I am aware that the double 'call' is horible and shitty can't
-    focus on structureJS right now - trying to fix DH*/
-    this._modules[modName] = moduleFunc.call(null).call(null);
+  /*I split this up because I want the module importation via require to be transparent
+  to the user. so require will correctly get any type of module*/
+  moduleAMD : function(modName, executeModule){
+    var moduleWrapper = {type : 'amd', name : modName};
+    moduleWrapper['module'] = executeModule.call(null).call(null);
+    if(typeof moduleWrapper['module'] == 'undefined')
+      throw 'Module Function Definition Must Return Something';
+    this._modules[modName] = moduleWrapper;
   },
   
   loadConfigAndManifest : function(onLoaded){
