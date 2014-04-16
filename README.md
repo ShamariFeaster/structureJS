@@ -21,7 +21,7 @@ You need one  `script` tag and a couple of `data`  attributes (one required and 
 ```
 `id` - (required) must be "structureJS"
 
-`src` - (required) This points to the structureJS `Bootstrap.js` file.
+`src` - (required) This points to the structureJS `structureJS.js` bootstrap file.
 
 `data-manifest` - (required) This is where you declare the files your app will use and each file's dependencies.
 
