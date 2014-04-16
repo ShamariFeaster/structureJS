@@ -29,13 +29,17 @@ You need one  `script` tag and a couple of `data`  attributes (one required and 
 
 The directory structure looks like:
 ```
-myAppDirectory (You can call this whatever you want)
-|-myapp.html (your script tag goes here declaring the manifest and config files)
-|-structureJS.js (structureJS bootstrap file. This is where all the magic happens) (Required)
-|-manifest.js (Read further to learn what this is) (Required)
-|-config.js (Read further to learn what this is)  (Optional)
-|------ModulesDirectory (You can call this whatever you want)
-|------|-file1.js (This is where you define your modules)
+
+|myAppDirectory (dir)(You can call this whatever you want)
+|-|myapp.html (declaring the manifest and config files)
+|
+|-structureJS (dir)(You can call this whatever you want)
+|-|-structureJS.js (structureJS bootstrap file.) (Required)
+|-|-manifest.js (Read further to learn what this is) (Required)
+|-|-config.js (Read further to learn what this is) (Optional)
+|
+|-ModulesDirectory (dir) (You can call this whatever you want)
+|--|-file1.js (This is where you define your modules)
 ```
 #### Example Config File ####
 
