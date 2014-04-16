@@ -15,9 +15,9 @@ You need one  `script` tag and a couple of `data`  attributes (one required and 
 
 ```html
 <script id="structureJS"
-    data-manifest="scripts/structureJs/manifest"
-    data-config="scripts/structureJs/config"
-    src="scripts/structureJs/structureJS.js"/>
+    data-manifest="structureJS/manifest"
+    data-config="structureJS/config"
+    src="structureJS/structureJS.js"/>
 ```
 `id` - (required) must be "structureJS"
 
@@ -27,16 +27,16 @@ You need one  `script` tag and a couple of `data`  attributes (one required and 
 
 `data-config` - (optional) If you wish to use your own directory structure, modules available to all other modules (utilities for example), or gloabl scripts (jQuery for example) you use a config file and declare its name here. It doesn't have to be "config", it can be called whatever you want
 
-The directory structure looks like:
+The typical directory structure looks like:
 ```
 
-|myAppDirectory (dir)(You can call this whatever you want)
-|-|myapp.html (declaring the manifest and config files)
+|-myAppDirectory (dir)(You can call this whatever you want)
+|--|myapp.html (declaring the manifest and config files)
 |
 |-structureJS (dir)(You can call this whatever you want)
-|-|-structureJS.js (structureJS bootstrap file.) (Required)
-|-|-manifest.js (Read further to learn what this is) (Required)
-|-|-config.js (Read further to learn what this is) (Optional)
+|--|-structureJS.js (structureJS bootstrap file.) (Required)
+|--|-manifest.js (Read further to learn what this is) (Required)
+|--|-config.js (Read further to learn what this is) (Optional)
 |
 |-ModulesDirectory (dir) (You can call this whatever you want)
 |--|-file1.js (This is where you define your modules)
