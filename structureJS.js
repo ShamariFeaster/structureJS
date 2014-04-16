@@ -59,10 +59,11 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     }
     
     /*Wrap commons and push onto front of modules*/
-    for(var i = 0; i < commons.length; i++){
+    for(var i = commons.length - 1; i >= 0 ; i--){
       var obj = {}; obj[commons[i]] = null;
       _this._files.unshift(obj);
     }
+    
     /*Put globals at the front of the line*/
     _this._files = globals.concat(_this._files);
 
@@ -229,16 +230,21 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
   */
   module : function(modName, moduleFunc){
     var _this = this;
-    /*Supports jQuery AMD by recognizing and calling init function
-    that jquery passes to use using AMD-spec define*/
     var require = function(depName){
       var module = _this._modules[depName];
-      if(typeof module == 'function')
-        module = module.call(null);
       return module;
     }
-    
+    /*Put the return val of the module function into modules object
+    so they can be retrieved later using 'require'*/
     this._modules[modName] = moduleFunc.call(null, require);
+  },
+  moduleAMD : function(modName, moduleFunc){
+    var _this = this;
+    /*Supports jQuery AMD by recognizing and calling init function
+    that jquery passes to use using AMD-spec define.
+    FYI I am aware that the double 'call' is horible and shitty can't
+    focus on structureJS right now - trying to fix DH*/
+    this._modules[modName] = moduleFunc.call(null).call(null);
   },
   
   loadConfigAndManifest : function(onLoaded){
@@ -282,10 +288,9 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
   see: https://github.com/amdjs/amdjs-api/blob/master/AMD.md
        http://addyosmani.com/writing-modular-js/*/
   window.define = function(id, deps, factory){
-    window.structureJS.module(id, factory);
+    window.structureJS.moduleAMD(id, factory);
   };
   window.define.amd = {jQuery : true};
   
   structureJS.loadConfigAndManifest(structureJS.resolveDependencies);
-
 })(window);
