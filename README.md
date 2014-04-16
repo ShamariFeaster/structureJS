@@ -83,13 +83,15 @@ NOTE: `file1` cannot depend on `file2` while `file2` depends on `file1`. This is
 
 ### Modules ###
 
+structureJS also lets your create and use modules. Modules are designed to provide bits of functionality to an app. For example I have a module that provides timing functions such as determining execution times and date formatting. I do this kind thing a lot, so by writing it as a module I can drop it into any of my apps quickly using structureJS.
+
 Modules in structureJS are declared like this:
 
-**file1.js**
+**Time.js**
 ```javascript
 /*NOTE: You don't have to name the module the same as the file*/
-structureJS.module('module1', function(require){
-    var blah = require('moduleX');
+structureJS.module('Time', function(require){
+    var format = require('formatter');
     return {
       /*whatever functionality you want to expose to other
         modules*/
@@ -97,7 +99,7 @@ structureJS.module('module1', function(require){
 });
 ```
 
-structureJS also lets your create and use modules. Those modules are given access to their dependencies using a function passed into them called `require`. **Any modules in files imported before the one you are using are available to you through the require function.** Using `require` performs two essential functions:
+Those modules are given access to their dependencies using a function passed into them called `require`. **Any modules in files imported before the one you are using are available to you through the require function.** Using `require` performs two essential functions:
 
 1. Semantically: You can look at a module and quickly know what other modules it expects to use.
 2. Syntactically: It Lets you know if those dependencies are there or not.
