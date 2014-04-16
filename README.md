@@ -116,6 +116,50 @@ structureJS.module('module1', function(require){
 
 A module could be a class or it could be some logic or anything you want it to be. `this` inside modules is the window object so you can operate on that level if you wish. Making changes to the DOM using jQuery would be a good example of this.
 
+### Maintainability Through Module Semantics ###
+
+structureJS has some lightweight features that let you write self documenting code. When you define a module you can pass the module a `configuration` object contains important data to bootstrap the module as well as semantic data.
+
+**Module1.js**
+```javascript
+structureJS.module({name: 'module1', type : 'class'}, function(require){
+    console.log('Hello From module1');
+    return {rUwasted: 'hell yea!'};
+});  
+```
+
+Instead of a `name` string like in the above module definition, we pass this module an object. Notice we define a module `type`. This `type` is purely semantic. It should describe the modules high-level function. For example is it a service? Or a singleton? Or a class?
+
+This improve reuse because, at a glance, you can know a modules high level function. 
+
+In structureJS a module can read the semantic data of other objects using the `require` function. 
+
+**Module2.js**
+```javascript
+structureJS.module('module1', function(require){
+    var module1= require._class('module1');   //1
+    var $ =      require.amd('jquery');       //2
+
+    console.log(require.getType('module1'));  //3   prints 'class'
+    console.log(require.getType('jqeury'));   //4   prints 'amd'
+    return {};
+});   
+```
+
+The example above shows some of the current semantic capabilities available structureJS modules. The require function has aliases attached to it that help specify what you are importing. At line 1, we use the `_class` alias to inform the user `module1` is a class. So even if we didn't print the module type like at line 3, a reader would know right away `module1` is a class that can be instantiated. 
+
+The same goes for modules loaded using AMD. They are automatically assigned a type of `amd` and can be imported using the `amd` alias of `require`.
+
+This is an experimental way to put documentation in the code. This may or may not be removed later on.
+
+***Using Require Function In Non-Modules***
+
+Remember structureJS is not just about creating modules. In fact you could use structureJS and never use a module. You could use it to synchronize your script load order and never touch the module functionality. 
+
+If your main processing logic won't have potential re-usability then it really doesn't make sense to put it in a module. But you still want access to all those sweet modules your main script depends on, right?
+
+structureJS let's you use the `structureJS.require` function. This is just an alias of the `require` function you use inside of modules so it works exactly the same way. 
+
 ### AMD Compliance ###
 
 Currently structureJS is partially AMD compliant. JQuery is the only AMD compliant library I have tested it with. That being said, hopefully I can get some help from the community to bring structureJS into full compliance.
