@@ -260,10 +260,12 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     /*aliases that let user's add semantic meaning to thier require calls*/
     require.amd = require;
     require._class = require;
+    structureJS.require = require;
     /*Introspection function of require obj*/
     require.getType = function(depName){
       return _this._modules[depName]['type'];
     }
+
     /*Put the return val of the module function into modules object
     so they can be retrieved later using 'require'*/
     moduleWrapper['module'] = executeModule.call(null, require); 
@@ -281,6 +283,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     moduleWrapper['module'] = executeModule.call(null).call(null);
     if(typeof moduleWrapper['module'] == 'undefined')
       throw 'Module Function Definition Must Return Something';
+    console.log('AMD: Loading ' + modName);
     this._modules[modName] = moduleWrapper;
   },
   
