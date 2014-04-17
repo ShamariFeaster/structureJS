@@ -63,12 +63,13 @@ The typical directory structure looks like:
 
 You can tell structureJS to import files using a call to `structureJS.module()`, `structureJS.config.commons`, or `structureJS.config.globals`. The difference between the methods is that if you use `structureJS.module()` you are creating a module that can be accessed by other modules using the `require` function described later. 
 
-The files you declare for import using `structureJS.config.commons` or `structureJS.config.globals` won't be automatically converted to modules unless they are AMD compliant (like jQuery for example). That being said, the file declared there can have modules created using`structureJS.module()`. 
+The files you declare for import using `structureJS.config.commons` or `structureJS.config.globals` won't be automatically converted to modules unless they are AMD compliant (like jQuery for example). That being said, the file declared there can have modules created using `structureJS.module()`. 
 
 #### Multiple Modules In A Single File ####
 
 This is possible. Be aware that you loose the ability to have the import order automatically resolved by structureJS. Any intra-file dependencies have to be resolved by you by putting the dependencies above their dependents.
 
+**NOTE: **Currently, any imports declared using `structureJS.module()` must return a value. 
 
 ### Example Config File ###
 
@@ -102,10 +103,13 @@ structureJS.config = {
 By default structureJS give you two places to put your app's files, `module_base` and `global_base`. You may want to use file from other locations. For example, you may have your driver scripts containing the application logic. These aren't modules so you probably wouldn't want to dump them into the default `Modules/` folder. Say you want to put them in a folder one level above your HTML page in a folder called `drivers/`.
 
 Add the following to the config object:
-`...
+```javascript
+structureJS.config = {
+ //other config object stuff
  directory_aliases : {driver : '../drivers/'},
- ...
- `
+ //other config object stuff
+};
+````
 
 Now when you declare the file in your manifest you could put `driver` in front of the filename instead of `../drivers/` like so: 
 
@@ -117,9 +121,13 @@ Another great use of aliasing is it allows you to keep your module collection ou
 
 For example, you could keep your module collection somewhere on your server and alias your module import directory to access them.
 
-`...
+```javascript
+structureJS.config = {
+ //other config object stuff
  directory_aliases : {mod-lib : '../../module_repo/'},
- ...
+ //other config object stuff
+};
+```
 
 **NOTE:** All paths are relative to the location of HTML file the structureJS script tag.
 
