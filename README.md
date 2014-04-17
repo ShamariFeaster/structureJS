@@ -58,7 +58,21 @@ The typical directory structure looks like:
 |-ModulesDirectory (dir) (You can call this whatever you want)
 |--|-file1.js (This is where you define your modules)
 ```
-#### Example Config File ####
+
+### Importing Files ###
+
+You can tell structureJS to import files using a call to `structureJS.module()`, `structureJS.config.commons`, or `structureJS.config.globals`. The difference between the methods is that if you use `structureJS.module()` you are creating a module that can be accessed by other modules using the `require` function described later. 
+
+The files you declare for import using `structureJS.config.commons` or `structureJS.config.globals` won't be automatically converted to modules unless they are AMD compliant (like jQuery for example). That being said, the file declared there can have modules created using`structureJS.module()`. 
+
+#### Multiple Modules In A Single File ####
+
+This is possible. Be aware that you loose the ability to have the import order automatically resolved by structureJS. Any intra-file dependencies have to be resolved by you by putting the dependencies above their dependents.
+
+
+### Example Config File ###
+
+Set up your app here.
 
 **config.js**
 ```javascript
@@ -66,19 +80,46 @@ structureJS.config = {
   structureJs_base : 'scripts/structureJs/',
   module_base : 'scripts/structureJs/Modules/',
   global_base : 'scripts/structureJs/lib/',
+  directory_aliases : {driver : 'drivers/'},
   commons : ['Util'],
   globals : ['nastyGloablPollution']
 };
 ```
 `structureJs_base` - (required) Path to where structureJS lives.
 
-`module_base` - (required) Path to where you put your modules.
+`module_base` - (required) Defualt path to all files your app uses.
 
-`global_base` - (required) Path to where you put your scripts that should be available globally.
+`global_base` - (required) Path to the files you declare in the `globals` config array.
 
-`commons` - (optional) Names of files that house modules. These modules are available to all the other modules of you app. Basically declare your utility scripts here. **Can be an empty array.**
+`commons` - (optional) Names of files your app uses. These modules are available to all the other modules of you app. Basically declare your utility scripts here. **Can be an empty array.**
 
 `globals` - (optional) File names of scripts your app will use globally. WARNING: These files will pollute the global namespace. In some cases you may be OK with that so I put the option in here to support that. **Can be an empty array.**
+
+`directory_aliases` - (optional) Path to other files in your app. See instructions below
+
+#### Directory Aliasing ####
+
+By default structureJS give you two places to put your app's files, `module_base` and `global_base`. You may want to use file from other locations. For example, you may have your driver scripts containing the application logic. These aren't modules so you probably wouldn't want to dump them into the default `Modules/` folder. Say you want to put them in a folder one level above your HTML page in a folder called `drivers/`.
+
+Add the following to the config object:
+`...
+ directory_aliases : {driver : '../drivers/'},
+ ...
+ `
+
+Now when you declare the file in your manifest you could put `driver` in front of the filename instead of `../drivers/` like so: 
+
+`structureJS.module('driver/MyDriver');`
+
+Now you can change the location of your drivers once in the config object and all your imports will still work. Or you can use the aliases to add semantic meaning to the import of files liek we did by using the word 'driver' before our module.
+
+Another great use of aliasing is it allows you to keep your module collection outside of any one project but make use of them from any project.
+
+For example, you could keep your module collection somewhere on your server and alias your module import directory to access them.
+
+`...
+ directory_aliases : {mod-lib : '../../module_repo/'},
+ ...
 
 **NOTE:** All paths are relative to the location of HTML file the structureJS script tag.
 
