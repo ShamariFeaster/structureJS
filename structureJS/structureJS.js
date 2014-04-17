@@ -1,7 +1,8 @@
 var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
   options : {
     log : true,
-    max_log_level : 3,
+    max_log_level : 1,
+    override_console_log : true,
     log_off_in_production : true,
     download_minified : false,
     minified_output_tag_id : 'minified'
@@ -416,11 +417,15 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     level 4 - get as fine grained as you want*/
   if ( window.console && structureJS.options.log && structureJS.options.max_log_level > 0){
     var log = window.console.log;
-    window.console.log = function(priority, msg){
-      if(arguments.length == 2 && priority <= structureJS.options.max_log_level){
-        log.apply(window.console, [msg]);
-      }
-    };
+    /*You can turn off prioritization*/
+    if(structureJS.options.override_console_log == true){
+      window.console.log = function(priority, msg){
+        if(arguments.length == 2 && priority <= structureJS.options.max_log_level){
+          log.apply(window.console, [msg]);
+        }
+      };
+    }
+    
     /*does nthing without a priority*/
     window.console.logf = function(priority, formattedString, formatArgs){
       var priority = arguments[0];
