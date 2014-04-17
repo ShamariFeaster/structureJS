@@ -24,8 +24,8 @@ You need one  `script` tag and a couple of `data`  attributes in that tag to boo
 
 ```html
 <script id="structureJS"
-    data-manifest="structureJS/manifest"
-    data-config="structureJS/config"
+    data-manifest="manifest"
+    data-config="config"
     data-uglify="false"
     data-is-combined="false"
     src="structureJS/structureJS.js"/>
@@ -34,9 +34,9 @@ You need one  `script` tag and a couple of `data`  attributes in that tag to boo
 
 `src` - (required) This points to the structureJS `structureJS.js` bootstrap file.
 
-`data-manifest` - (required) This is where you declare the files your app will use and each file's dependencies.
+`data-manifest` - (required) This is where you declare the files your app will use and each file's dependencies. **Must be in the directory specified in `config.structureJS_base`.**
 
-`data-config` - (optional) If you wish to use your own directory structure, modules available to all other modules (utilities for example), or gloabl scripts (jQuery for example) you use a config file and declare its name here. It doesn't have to be "config", it can be called whatever you want
+`data-config` - (optional) If you wish to use your own directory structure, modules available to all other modules (utilities for example), or gloabl scripts (jQuery for example) you use a config file and declare its name here. It doesn't have to be "config", it can be called whatever you want. **Must be in the directory specified in `config.structureJS_base`.**
 
 `data-uglify` - (optional) When true, your app is combined, minified, & mangled using UglifyJS then downloaded right in your browser.
 
@@ -76,9 +76,9 @@ structureJS.config = {
 
 `global_base` - (required) Path to where you put your scripts that should be available globally.
 
-`commons` - (required) Names of files that house modules. These modules are available to all the other modules of you app. Basically declare your utility scripts here.
+`commons` - (optional) Names of files that house modules. These modules are available to all the other modules of you app. Basically declare your utility scripts here. **Can be an empty array.**
 
-`globals` - (required) File names of scripts your app will use globally. WARNING: These files will pollute the global namespace. In some cases you may be OK with that so I put the option in here to support that
+`globals` - (optional) File names of scripts your app will use globally. WARNING: These files will pollute the global namespace. In some cases you may be OK with that so I put the option in here to support that. **Can be an empty array.**
 
 ### The Manifest File ###
 
@@ -196,6 +196,8 @@ To minify your project simply set the `data-uglify` atrribute to true like shown
     src="structureJS/structureJS.js"/>
 ```
 
+It's a good idea to keep the `data-uglify` attribute in the tag at all times. This way you don't have to paste it in everytime you want to minify. Just keep it set to false until you're ready to minify your app.
+
 **NOTE:** For Chrome extensions, you will need to add `unsafe-eval` option to your content security policy object in your manifest. UglifyJS needs to use eval to work. Since minification doesn't need to be done in production you can simply remove this permission before deployment.
 
 `"content_security_policy": "script-src 'self' 'unsafe-eval' ; object-src 'self'"`
@@ -215,7 +217,7 @@ like all things in structureJS using the results of the minification is really e
 
 You don't have to change anything else in your project. Once you set this attribute in the HTML, structureJS knows not to worry about your module declarations or dependency resolution. Simple.
 
-**NOTE:** `data-manifest` attribute is still required when using a combined, minifed version.
+**NOTE:** `data-manifest` attribute NOT required when using a combined, minifed version but it's a good idea to leave it in if you are not in production. Keeps you from having to paste it back in when you need to go back to the un-combined form.
 
 ### AMD Compliance ###
 

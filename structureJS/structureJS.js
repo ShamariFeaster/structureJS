@@ -317,7 +317,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     var config = structureTag.getAttribute('data-config');
     var manifest = structureTag.getAttribute('data-manifest');
     var uglify = structureTag.getAttribute('data-uglify');
-    
+    var structreJSBase = this.config.structureJS_base;
     if(typeof manifest === 'undefined' || manifest === '' || manifest === null)
       throw 'ERROR: No manifest declared';
       
@@ -328,19 +328,19 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     //recursive callback
     var callback = function(){
       if(manifest != null){
-        console.log('Loading Manifest: ' + manifest );
-        _this.loadScript(manifest + '.js', callback);
+        console.log('Loading Manifest: ' + structreJSBase + manifest );
+        _this.loadScript(structreJSBase + manifest + '.js', callback);
         manifest = null;
       }else{
-        console.log('Init Done Loading.');
+        console.log('Done Loading Manifest And/Or Config Files.');
         onLoaded.call(_this);
       }
     }
     if(config){
-      console.log('Loading Config: ' + config );
-      this.loadScript( config + '.js', callback );
+      console.log('Loading Config: ' + structreJSBase + config );
+      this.loadScript( structreJSBase + config + '.js', callback );
     }else{
-      this.loadScript( manifest + '.js', function(){
+      this.loadScript( structreJSBase + manifest + '.js', function(){
         onLoaded.call(_this);
       } );
     }
