@@ -1,11 +1,16 @@
 structureJS
 ===========
 
+1. Break your app up into seperate files.
+2. Create  reusable, configurable modules.
+3. Declare the structure of the app in any order and structureJS will resolve order dependency automatically.
+4. Minify and combine all modules and files into a single file right from your browser.
+5. Utilize module dependencies easily and add semantic meaning to your modules
+6. Only puts one variable into the global namespace
+7. Partially AMD compliant (works with jQuery AMD for now, more to come)
+
+
 This 11kB (uncompressed) program allows you to break up complex Javacript apps into multiple files and reusable modules. It handles the complexity of making sure your files are imported in the right order. Use a manifest to modify the entire structure of you app in one file. 
-
-Quickly build and deploy your app using only your browser. Using UglifyJS, structureJS will minify and combine your app into a single file right in your browser. 
-
-Say goodbye to crazy build scripts.
 
 If you write Javascript applications and you want a simple, lightweight way to efficiently organize your code give it a try
 
@@ -137,6 +142,8 @@ A module could be a class or it could be some logic or anything you want it to b
 
 structureJS has some lightweight features that let you write self documenting code. When you define a module you can pass the module a `configuration` object contains important data to bootstrap the module as well as semantic data.
 
+Instead of a `name` string like in **file1.js**, we pass this module an object. Notice we define a module `type`. This `type` is purely semantic. It should describe the modules high-level function. For example is it a service? Or a singleton? Or a class?
+
 **Module1.js**
 ```javascript
 structureJS.module({name: 'module1', type : 'class'}, function(require){
@@ -144,8 +151,6 @@ structureJS.module({name: 'module1', type : 'class'}, function(require){
     return {rUwasted: 'hell yea!'};
 });  
 ```
-
-Instead of a `name` string like in the above module definition, we pass this module an object. Notice we define a module `type`. This `type` is purely semantic. It should describe the modules high-level function. For example is it a service? Or a singleton? Or a class?
 
 This improve reuse because, at a glance, you can know a modules high level function. 
 
@@ -176,6 +181,41 @@ Remember structureJS is not just about creating modules. In fact you could use s
 If your main processing logic won't have potential re-usability then it really doesn't make sense to put it in a module. But you still want access to all those sweet modules your main script depends on, right?
 
 structureJS let's you use the `structureJS.require` function. This is just an alias of the `require` function you use inside of modules so it works exactly the same way. 
+
+### Minification Using Just Your Browser ###
+
+structureJS uses the awesome work of UglifyJS to let you combine, compress, and mangle your app into a single file. structureJS will combine your files in the correct order. Currently, to download the compressed file you must have an HTML5 compliant browser. Do yourself a favor and just use Chrome. 
+
+To minify your project simply set the `data-uglify` atrribute to true like shown below. The next time you run your app structureJS and UglifyJS will work their magic and produce you a super sweet combined and minified version of your project.
+
+```html
+<script id="structureJS"
+    data-manifest="structureJS/manifest"
+    data-config="structureJS/config"
+    data-uglify="true"
+    src="structureJS/structureJS.js"/>
+```
+
+**NOTE:** For Chrome extensions, you will need to add `unsafe-eval` option to your content security policy object in your manifest. UglifyJS needs to use eval to work. Since minification doesn't need to be done in production you can simply remove this permission before deployment.
+
+`"content_security_policy": "script-src 'self' 'unsafe-eval' ; object-src 'self'"`
+
+See: https://developer.chrome.com/extensions/contentSecurityPolicy
+
+### Using The Minified Version In Production ###
+
+like all things in structureJS using the results of the minification is really easy. No need to mess around with config files or anything like that. Simply let structureJS know by setting the `data-is-combined` atrribute to true like shown below and set the `src` attribute the location of the minified version.
+
+```html
+<script id="structureJS"
+    data-manifest="structureJS/manifest"
+    data-is-combined="true"
+    src="my-minified-version.js"/>
+```
+
+You don't have to change anything else in your project. Once you set this attribute in the HTML, structureJS knows not to worry about your module declarations or dependency resolution. Simple.
+
+**NOTE:** `data-manifest` attribute is still required when using a combined, minifed version.
 
 ### AMD Compliance ###
 
