@@ -69,7 +69,6 @@ The files you declare for import using `structureJS.config.commons` or `structur
 
 This is possible. Be aware that you loose the ability to have the import order automatically resolved by structureJS. Any intra-file dependencies have to be resolved by you by putting the dependencies above their dependents.
 
-**NOTE: **Currently, any imports declared using `structureJS.module()` must return a value. 
 
 ### Example Config File ###
 
