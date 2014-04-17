@@ -1,5 +1,11 @@
 var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
-  
+  options : {
+    log : true,
+    max_log_level : 3,
+    log_off_in_production : true,
+    download_minified : false,
+    minified_output_tag_id : 'minified'
+  },
   config : {
     structureJS_base : 'structureJS/',
     module_base : 'Modules/',
@@ -33,7 +39,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
   },
   resolveFilePath : function(input){
     var config = this.config;
-    //console.log(config);
+
     function resolveDirectoryAliases(input, defaultBase){
       var aliases = config.directory_aliases;
       var results = defaultBase + input + '.js';
@@ -45,11 +51,9 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
       var regex = null;
       for(var alias in aliases){
         regex = new RegExp('^' + alias + '\/', 'i');
-        //console.log(regex + ' ' + input);
         matchResult = regex.exec(input);
         
         if(matchResult != null){
-          //console.log( matchResult[0] + ' ' + aliases[alias]);
           results = input.replace(matchResult[0], aliases[alias]) + '.js';
         }
       }
@@ -57,7 +61,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     }
   
     var filePath = '';
-    if(typeof input != 'undefined' && typeof input === 'object')
+    if( input && typeof input === 'object' )
       filePath = resolveDirectoryAliases(Object.keys(input)[0], config.module_base);//config.module_base + Object.keys(input)[0] + '.js';
     else if(input == this.UGLYFY_FILENAME || input == this.COMPRESSION_FILENAME)
       filePath = resolveDirectoryAliases(input, config.structureJS_base);//config.structureJS_base + input + '.js';
@@ -67,7 +71,6 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
       return filePath;
   },
   loadScript : function(url, callback){
-    console.log('Loading: ' + url);
       var head = document.getElementsByTagName('head')[0];
       var script = document.createElement('script');
       script.type = 'text/javascript';
@@ -105,14 +108,14 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
       var filePath = _this.resolveFilePath( _this._files.shift() );
       
       if(filePath){
-         //console.log('Inside callback: loading ' + filePath );
+         console.logf(1,'Loading: %s',filePath);
         _this.loadScript(filePath, callback);
       }else if(_this.uglifyMode == true){
         _this.loadScript(_this.resolveFilePath('structureJSCompress'), function(){
-          console.log('Modules Done Loading. Enjoy structureJS!')
+          console.log(1,'Modules Done Loading. Enjoy structureJS!')
         });
       }else{
-        console.log('Modules Done Loading. Enjoy structureJS!');
+        console.log(1,'Modules Done Loading. Enjoy structureJS!');
       }
     }
 
@@ -131,16 +134,16 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     var modName2 = '';
     var modName3 = '';
     for(var modName1 in needTree){//for every module
-     console.log('Checking ' + modName1 + '\s dependencies');
+     console.logf(3,'Checking %s\'s dependencies',modName1);
      
       for(var i1 = 0;i1 < needTree[modName1].length; i1++){//go through it's depenedencies
         modName2 = needTree[modName1][i1];
-        console.log('Dependency ' + i1 + ' of ' + modName1 + ' is ' + modName2);
+        console.logf(3,'Dependency %s of %s is %s',i1 ,modName1 ,modName2);
 
         if(typeof needTree[modName2] !== 'undefined'){//my dependency list
           for(var i2 = 0;i2 < needTree[modName2].length; i2++){//make sure module isn't a dependency of its own dependency
             modName3 = needTree[modName2][i2];
-            console.log('Checking ' + modName2 + '\s dependencies for circular reference to parent ' + modName1 );
+            console.logf(3,'Checking %s\'s dependencies for circular reference to parent %s',modName2,modName1 );
             if(modName1 == modName3){
               throw 'ERROR: CIRCULAR DEPENDENCY: ' + modName1 + ' is a dependency of its own dependency ' + modName2;
             }
@@ -174,7 +177,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
       for(var i = 0; i < modules.length; i++){
         output += getModName( modules[i] ) + ',';
       }
-      console.log(output);
+      console.log(2,output);
     }
     
     printOrder('Starting Order: ', modules);
@@ -224,7 +227,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
       parentName = getModName(modules[i1]);
       parentIndex = getIndex(parentName);
       parentDeps = getModDeps(parentName);
-      console.log('Resolving: ' + parentName + ' Index: ' + i1);
+      console.logf('Resolving: %s, Index: %s',parentName, i1);
       for(var i = 0; i < parentDeps.length; i++){
         childName = parentDeps[i];
         if(parentName === childName)
@@ -257,7 +260,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
       for(var i = 0; i < modules.length; i++){
         output += getModName( modules[i] ) + ',';
       }
-      console.log(output);
+      console.log(2,output);
     }
     
     printOrder('Resolved Order: ', this._files);
@@ -311,8 +314,6 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
       throw modName + ' FAILED: Module Function Definition Must Return Something';
     
     this._modules[modName] = moduleWrapper;
-    //console.log(this._modules[modName]);
-    
   },
   
   /*I split this up because I want the module importation via require to be transparent
@@ -322,7 +323,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     moduleWrapper['module'] = executeModule.call(null).call(null);
     if(typeof moduleWrapper['module'] == 'undefined')
       throw 'Module Function Definition Must Return Something';
-    console.log('AMD: Loading ' + modName);
+    console.logf(2,'AMD: Loading %s', modName);
     this._modules[modName] = moduleWrapper;
   },
   
@@ -346,16 +347,16 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     //recursive callback
     var callback = function(){
       if(manifest != null){
-        console.log('Loading Manifest: ' + structreJSBase + manifest );
+        console.logf(2,'Loading Manifest: %s%s', structreJSBase, manifest );
         _this.loadScript(structreJSBase + manifest + '.js', callback);
         manifest = null;
       }else{
-        console.log('Done Loading Manifest And/Or Config Files.');
+        console.log(2,'Done Loading Manifest And/Or Config Files.');
         onLoaded.call(_this);
       }
     }
     if(config){
-      console.log('Loading Config: ' + structreJSBase + config );
+      console.logf(2,'Loading Config: %s%s',structreJSBase,config );
       this.loadScript( structreJSBase + config + '.js', callback );
     }else{
       this.loadScript( structreJSBase + manifest + '.js', function(){
@@ -364,10 +365,85 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     }
       
     
+  },
+  /*exposed in console.logf extension
+    arguments[0] = priority 'number'
+    arguments[1] = formatted string
+    arguments[2 - x] = format args*/
+  printf : function(args){
+
+    arguments = args;
+    
+    var result = '';
+    var argIndex = 0;
+    var returnVal = null;
+    if(arguments.length > 1 && typeof arguments[1] === 'string'){
+      var formattedString = arguments[1];
+      args = Array.prototype.slice.call(arguments, 0);
+      
+      args = args.splice(2, (arguments.length - 1));
+      result += formattedString.replace(/%s/g, function(match, matchOffset, fullString){
+        if(argIndex < args.length){
+          return args[argIndex++];
+        }else{
+          return '%s';
+        }
+      });
+      returnVal = result;
+    }else{
+      returnVal = args[0];
+    }
+    
+    return returnVal;
   }
 };
 
 (function(window){
+  /*Sanity Check*/
+  var structureTag = document.getElementById('structureJS');//returns null if not found
+  if(typeof structureTag === 'undefined' || structureTag === null)
+    throw 'ERROR: No script tag with ID of "structureJS" which is required';
+  
+  /*Custom Logging Functions*/  
+  /*if there is no console or I have turned it off, kill log function*/
+  if ( ! window.console || structureJS.options.log == false) 
+    window.console = { log: function(){}, logf : function(){} };
+  
+  /*If I have set log level. calls to log must include prioritization
+    level 1 - intialization, sanity checks. etc
+    level 2 - general runtime health
+    level 3 - debug
+    level 4 - get as fine grained as you want*/
+  if ( window.console && structureJS.options.log && structureJS.options.max_log_level > 0){
+    var log = window.console.log;
+    window.console.log = function(priority, msg){
+      if(arguments.length == 2 && priority <= structureJS.options.max_log_level){
+        log.apply(window.console, [msg]);
+      }
+    };
+    /*does nthing without a priority*/
+    window.console.logf = function(priority, formattedString, formatArgs){
+      var priority = arguments[0];
+      if(arguments.length > 2 && typeof priority == 'number' && priority <= structureJS.options.max_log_level){
+        log.apply(window.console, [structureJS.printf(arguments)]);
+      }
+      
+    };
+  }
+  
+  /*Init*/
+  /*if user declares we are using a compressed version of ourself generated by us, then we
+  disable all module loading because structureJSCompress has already included everything*/  
+  var combined = structureTag.getAttribute('data-is-combined');
+  if(typeof combined != 'undefined' && combined !== null && /true/i.test(combined) == true){
+
+    if(structureJS.options.log_off_in_production == true)
+      structureJS.options.max_log_level = 0;
+      
+  }else{
+    structureJS.loadConfigAndManifest(structureJS.resolveDependencies);
+  }
+
   /*Trying to support AMD for jQuery. Total AMD compliance to come later.
     Becoming AMD compliant is going to require a lot of thought so that's something
     I think is best done by a community after open sourcing.
@@ -378,19 +454,12 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
   };
   window.define.amd = {jQuery : true};
   
-  if ( ! window.console ) window.console = { log: function(){} };
   
-  var structureTag = document.getElementById('structureJS');//returns null if not found
-  if(typeof structureTag === 'undefined' || structureTag === null)
-    throw 'ERROR: No script tag with ID of "structureJS" which is required';
-  /*if user declares we are using a compressed version of ourself generated by us, then we
-  disable all module loading because structureJSCompress has already included everything*/  
-  var combined = structureTag.getAttribute('data-is-combined');
-  if(typeof combined != 'undefined' && combined !== null && /true/i.test(combined) == true){
-    //don't do shit
-  }else{
-    structureJS.loadConfigAndManifest(structureJS.resolveDependencies);
-  }
+  
+
+  
+
+  
   
   
 })(window);

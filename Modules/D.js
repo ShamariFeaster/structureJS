@@ -1,5 +1,12 @@
 structureJS.module('D', function(require){
     var blah = require('C');
-    console.log(structureJS.cache('test'));
+    console.log(1, structureJS.cache('test'));
+    setTimeout(function(){
+     console.log(1, structureJS.cache('test'));
+     document.getElementById('test').innerText = 'D is loaded';
+    }, 1500);
+      
+   
+    
     return {};
 });  
