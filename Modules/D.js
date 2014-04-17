@@ -1,5 +1,5 @@
 structureJS.module('D', function(require){
-    var blah = require('jquery');
+    var blah = require('C');
     console.log(blah);
     return {};
 });  
