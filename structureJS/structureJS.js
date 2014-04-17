@@ -19,8 +19,18 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
   _files : [],
   _exportOrder : [],
   _modules : {},
+  _cache : {},
+  //Constants
   UGLYFY_FILENAME : 'uglifyjs.min',
   COMPRESSION_FILENAME : 'structureJSCompress',
+  cache : function(key, value){
+    var returnVal = null;
+    if(arguments.length == 1 && this._cache[key])
+      returnVal = this._cache[key];
+    if(arguments.length == 2 && key && value)  
+      this._cache[key] = value
+    return returnVal;
+  },
   resolveFilePath : function(input){
     var config = this.config;
     //console.log(config);

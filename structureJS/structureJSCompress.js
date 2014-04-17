@@ -28,7 +28,7 @@ structureJS.module({name: 'structureJSCompress', type : 'Utility'}, function(req
       else{
         console.log(combinedSrc);
         /*Download compressed file*/
-        //location.href = "data:application/octet-stream," + encodeURIComponent(combinedSrc);        
+        location.href = "data:application/octet-stream," + encodeURIComponent(combinedSrc);        
       }
     }
     if(fileName)
