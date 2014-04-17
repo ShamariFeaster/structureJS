@@ -61,9 +61,9 @@ The typical directory structure looks like:
 
 ### Importing Files ###
 
-You can tell structureJS to import files using a call to `structureJS.module()`, `structureJS.config.commons`, or `structureJS.config.globals`. The difference between the methods is that if you use `structureJS.module()` you are creating a module that can be accessed by other modules using the `require` function described later. 
+You can tell structureJS to import files using a call to `structureJS.define()` (in manfiset.js), `structureJS.config.commons`, or `structureJS.config.globals`. The difference between the methods is that if you use `structureJS.define()` you are creating a module that can be accessed by other modules using the `require` function described later. 
 
-The files you declare for import using `structureJS.config.commons` or `structureJS.config.globals` won't be automatically converted to modules unless they are AMD compliant (like jQuery for example). That being said, the file declared there can have modules created using `structureJS.module()`. 
+The files you declare for import using `structureJS.config.commons` or `structureJS.config.globals` won't be automatically converted to modules unless they are AMD compliant (like jQuery for example). That being said, the file declared there can create and utilize modules created using `structureJS.module()`. 
 
 #### Multiple Modules In A Single File ####
 
