@@ -1,13 +1,16 @@
 structureJS
 ===========
 
-1. Break your app up into seperate files.
-2. Create  reusable, configurable modules.
+Use structureJS to:
+
+1. Break your app up into separate files.
+2. Create reusable, configurable modules.
 3. Declare the structure of the app in any order and structureJS will resolve order dependency automatically.
-4. Minify and combine all modules and files into a single file right from your browser.
+4. Minify and combine all modules and files into a single file right from your browser. Deploy in seconds not minutes
 5. Utilize module dependencies easily and add semantic meaning to your modules
 6. Only puts one variable into the global namespace
 7. Partially AMD compliant (works with jQuery AMD for now, more to come)
+8. Prioritized logging and custom logging functions
 
 
 This 11kB (uncompressed) program allows you to break up complex Javacript apps into multiple files and reusable modules. It handles the complexity of making sure your files are imported in the right order. Use a manifest to modify the entire structure of you app in one file. 
