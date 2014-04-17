@@ -80,6 +80,8 @@ structureJS.config = {
 
 `globals` - (optional) File names of scripts your app will use globally. WARNING: These files will pollute the global namespace. In some cases you may be OK with that so I put the option in here to support that. **Can be an empty array.**
 
+**NOTE:** All paths are relative to the location of HTML file the structureJS script tag.
+
 ### The Manifest File ###
 
 Having one script depend on another's existence to function correctly is called a **dependency**. Managing dependencies in Javascript is notoriously difficult unless you use a program like RequireJS to deal with ordering things. Managing how and when scripts are loaded is called **dependency management**.

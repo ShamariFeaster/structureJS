@@ -5,17 +5,7 @@ structureJS.module({name: 'structureJSCompress', type : 'Utility'}, function(req
   var globalBase = structureJS.config.global_base;
   var exports = structureJS._exportOrder;
   exports.shift();//take uglify off the front
-  
-  function getFileName(input){
-    var fileName = null;
-    if(typeof input != 'undefined' && typeof input === 'object')
-      fileName = moduleBase + Object.keys(input)[0] + '.js';
-    if(typeof input != 'undefined' && typeof input === 'string')
-      fileName = globalBase + input + '.js';
-    return fileName;
-  }
-  
-  
+
   function compress(input){
     var toplevel = UglifyJS.parse(input);
     toplevel.figure_out_scope();
@@ -31,14 +21,14 @@ structureJS.module({name: 'structureJSCompress', type : 'Utility'}, function(req
   function combineSrcFiles(fileName){
     function callback(){
       combinedSrc += compress(this.responseText);
-      var nextFile = getFileName( exports.shift() );
+      var nextFile = exports.shift();
       //console.log('Next: ' + nextFile);
       if(nextFile)
         getSrc( nextFile, callback);
       else{
         console.log(combinedSrc);
         /*Download compressed file*/
-        location.href = "data:application/octet-stream," + encodeURIComponent(combinedSrc);        
+        //location.href = "data:application/octet-stream," + encodeURIComponent(combinedSrc);        
       }
     }
     if(fileName)
@@ -52,7 +42,7 @@ structureJS.module({name: 'structureJSCompress', type : 'Utility'}, function(req
     xhr.open('get',  fileName, true);
     xhr.send();
   }
-  //console.log( getFileName(exports.shift()) );
+  /*Put structureJS bootstrap on the fron*/
   combineSrcFiles( structureJS.config.structureJS_base + '/structureJS.js' );
   return {};
 });

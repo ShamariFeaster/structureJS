@@ -1,17 +1,3 @@
-/*
-  I am walking the line between keeping the code simple and hand-holding users.
-  An example of this is not putting complex code to fix dependency resolution if
-  a user puts a common in the manifest. This would increase the complexity and 
-  make maintenence hard for an edge case that is better solved with documentation.
-  Also the philosophy of structreJs is to stick to the bare minimum of what is 
-  necessary to let you easily structure a JS application. So by extension the documentation
-  should be short and concise - decreasing user error because the docs were too long or
-  complex for them to want to read.
-
-TODO: make intialization output on/off flag in config
-      make custom error class
-*/
-
 var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
   
   config : {
@@ -33,6 +19,43 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
   _files : [],
   _exportOrder : [],
   _modules : {},
+  UGLYFY_FILENAME : 'uglifyjs.min',
+  COMPRESSION_FILENAME : 'structureJSCompress',
+  resolveFilePath : function(input){
+    var config = this.config;
+    //console.log(config);
+    function resolveDirectoryAliases(input, defaultBase){
+      var aliases = config.directory_aliases;
+      var results = defaultBase + input + '.js';
+      if(typeof aliases == 'undefined')
+        return results;//default
+        
+      var matchResult = null;  
+
+      var regex = null;
+      for(var alias in aliases){
+        regex = new RegExp('^' + alias + '\/', 'i');
+        //console.log(regex + ' ' + input);
+        matchResult = regex.exec(input);
+        
+        if(matchResult != null){
+          //console.log( matchResult[0] + ' ' + aliases[alias]);
+          results = input.replace(matchResult[0], aliases[alias]) + '.js';
+        }
+      }
+      return results;
+    }
+  
+    var filePath = '';
+    if(typeof input != 'undefined' && typeof input === 'object')
+      filePath = resolveDirectoryAliases(Object.keys(input)[0], config.module_base);//config.module_base + Object.keys(input)[0] + '.js';
+    else if(input == this.UGLYFY_FILENAME || input == this.COMPRESSION_FILENAME)
+      filePath = resolveDirectoryAliases(input, config.structureJS_base);//config.structureJS_base + input + '.js';
+    else if(typeof input === 'string')
+      filePath = resolveDirectoryAliases(input, config.global_base)//config.global_base + input + '.js';
+
+      return filePath;
+  },
   loadScript : function(url, callback){
     console.log('Loading: ' + url);
       var head = document.getElementsByTagName('head')[0];
@@ -48,21 +71,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     var _this = this;
     var globals = _this.config.globals || [];
     var commons = _this.config.commons || [];
-    
-    /*file names grom globals array are strings, where as module filenames are
-    the keys of objects. The type is sentinel - TODO: find better way to do this*/
-    function getFilePath(input){
-      var filePath = '';
-      if(typeof input != 'undefined' && typeof input === 'object')
-        filePath = config.module_base + Object.keys(input)[0] + '.js';
-      else if(input == 'uglifyjs.min' || input == 'structureJSCompress')
-        filePath = config.structureJS_base + input + '.js';
-      else if(typeof input === 'string')
-        filePath = config.global_base + input + '.js';
 
-        return filePath;
-    }
-    
     /*Wrap commons and push onto front of modules*/
     for(var i = commons.length - 1; i >= 0; i--){
       var obj = {}; obj[commons[i]] = null;
@@ -78,27 +87,26 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     it here. Shallow leaves us with empty exports*/
     _this._files = globals.concat(_this._files);
     for(var i = 0; i < _this._files.length; i++){
-      _this._exportOrder.push(_this._files[i]);
+      _this._exportOrder.push(_this.resolveFilePath( _this._files[i] ));
     }
 
     //recursive callback
     var callback = function(){
-      var filePath = getFilePath( _this._files.shift() );
+      var filePath = _this.resolveFilePath( _this._files.shift() );
       
       if(filePath){
          //console.log('Inside callback: loading ' + filePath );
         _this.loadScript(filePath, callback);
       }else if(_this.uglifyMode == true){
-        _this.loadScript(getFilePath('structureJSCompress'), function(){
+        _this.loadScript(_this.resolveFilePath('structureJSCompress'), function(){
           console.log('Modules Done Loading. Enjoy structureJS!')
         });
       }else{
         console.log('Modules Done Loading. Enjoy structureJS!');
       }
     }
-    var p = getFilePath( _this._files.shift() );
-    console.log('first: ' + p);
-    _this.loadScript(  p , callback );
+
+    _this.loadScript( this.resolveFilePath( _this._files.shift() ) , callback );
     
   },
   /*I'm thinking I want to keep this process iterative because it will be kinder to
@@ -359,6 +367,8 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     window.structureJS.moduleAMD(id, factory);
   };
   window.define.amd = {jQuery : true};
+  
+  if ( ! window.console ) window.console = { log: function(){} };
   
   var structureTag = document.getElementById('structureJS');//returns null if not found
   if(typeof structureTag === 'undefined' || structureTag === null)
