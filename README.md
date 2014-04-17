@@ -3,6 +3,10 @@ structureJS
 
 This 11kB (uncompressed) program allows you to break up complex Javacript apps into multiple files and reusable modules. It handles the complexity of making sure your files are imported in the right order. Use a manifest to modify the entire structure of you app in one file. 
 
+Quickly build and deploy your app using only your browser. Using UglifyJS, structureJS will minify and combine your app into a single file right in your browser. 
+
+Say goodbye to crazy build scripts.
+
 If you write Javascript applications and you want a simple, lightweight way to efficiently organize your code give it a try
 
 ### Why I Made structureJS ###
@@ -11,12 +15,14 @@ Having a complex app as one big file is a terrible idea but Javascript was not r
 
 ### How Do I Use It ###
 
-You need one  `script` tag and a couple of `data`  attributes (one required and the other optional)  in that tag to bootstrap an app with structureJS
+You need one  `script` tag and a couple of `data`  attributes in that tag to bootstrap an app with structureJS
 
 ```html
 <script id="structureJS"
     data-manifest="structureJS/manifest"
     data-config="structureJS/config"
+    data-uglify="false"
+    data-is-combined="false"
     src="structureJS/structureJS.js"/>
 ```
 `id` - (required) must be "structureJS"
@@ -26,6 +32,10 @@ You need one  `script` tag and a couple of `data`  attributes (one required and 
 `data-manifest` - (required) This is where you declare the files your app will use and each file's dependencies.
 
 `data-config` - (optional) If you wish to use your own directory structure, modules available to all other modules (utilities for example), or gloabl scripts (jQuery for example) you use a config file and declare its name here. It doesn't have to be "config", it can be called whatever you want
+
+`data-uglify` - (optional) When true, your app is combined, minified, & mangled using UglifyJS then downloaded right in your browser.
+
+`data-is-combined` - (optional) When true, set `src` attribute to the result of the uglification decribed above and your app will use the compressed version.
 
 The typical directory structure looks like:
 ```
@@ -37,6 +47,8 @@ The typical directory structure looks like:
 |--|-structureJS.js (structureJS bootstrap file.) (Required)
 |--|-manifest.js (Read further to learn what this is) (Required)
 |--|-config.js (Read further to learn what this is) (Optional)
+|--|-structureJSCompress.js (Required to minify your app) (optional)
+|--|-uglifyjs.min.js (Required to minify your app) (optional) 
 |
 |-ModulesDirectory (dir) (You can call this whatever you want)
 |--|-file1.js (This is where you define your modules)
@@ -46,12 +58,15 @@ The typical directory structure looks like:
 **config.js**
 ```javascript
 structureJS.config = {
+  structureJs_base : 'scripts/structureJs/',
   module_base : 'scripts/structureJs/Modules/',
   global_base : 'scripts/structureJs/lib/',
   commons : ['Util'],
   globals : ['nastyGloablPollution']
 };
 ```
+`structureJs_base` - (required) Path to where structureJS lives.
+
 `module_base` - (required) Path to where you put your modules.
 
 `global_base` - (required) Path to where you put your scripts that should be available globally.
@@ -76,6 +91,8 @@ structureJS.declare('file3');
 structureJS.declare('jquery');
 ```
 The central idea behind the manifest file is it provides a central place that you can go to manage the structure of your app. It doesn't matter what order you declare the modules in, structureJS will handle the dependency resolution and make sure files are imported in the order required for everything to work.
+
+All files used have to be declare in their own call to `declare`. If you name something as a dependency that hasn't been declared structureJS will cry and not load.
 
 Note that what we are declaring here are file names, not modules. A single file can have as many modules as you want. That being said, if there dependencies between modules within a single file you must order your modules so that dependencies are at the top.
 
@@ -137,8 +154,8 @@ In structureJS a module can read the semantic data of other objects using the `r
 **Module2.js**
 ```javascript
 structureJS.module('module1', function(require){
-    var module1= require._class('module1');   //1
-    var $ =      require.amd('jquery');       //2
+    var module1 = require._class('module1');   //1
+    var $       = require.amd('jquery');       //2
 
     console.log(require.getType('module1'));  //3   prints 'class'
     console.log(require.getType('jqeury'));   //4   prints 'amd'
