@@ -10,7 +10,6 @@ Use structureJS to:
 5. Utilize module dependencies easily and add semantic meaning to your modules
 6. Only puts one variable into the global namespace
 7. Partially AMD compliant (works with jQuery AMD for now, more to come)
-8. Prioritized logging and custom logging functions
 
 
 This 11kB (uncompressed) program allows you to break up complex Javacript apps into multiple files and reusable modules. It handles the complexity of making sure your files are imported in the right order. Use a manifest to modify the entire structure of you app in one file. 
@@ -73,44 +72,57 @@ The files you declare for import using `structureJS.config.commons` or `structur
 This is possible. Be aware that you loose the ability to have the import order automatically resolved by structureJS. Any intra-file dependencies have to be resolved by you by putting the dependencies above their dependents.
 
 
-### Example Config File ###
+### Configuring Your App ###
 
-Set up your app here.
+Although structureJS comes with default configuration, you can configure the bootstrap process in a config file away from the structureJS source code. To do this put a call to 
+
+`structureJS.configure(Object configSettings [, Object optionsSetting])`
+
+inside the config file you specified in `data-config` attribute of structureJS' `<script>` tag.
 
 **config.js**
 ```javascript
-structureJS.config = {
-  structureJs_base : 'scripts/structureJs/',
-  module_base : 'scripts/structureJs/Modules/',
-  global_base : 'scripts/structureJs/lib/',
-  directory_aliases : {driver : 'drivers/'},
-  commons : ['Util'],
-  globals : ['nastyGloablPollution']
-};
+structureJS.configure(
+{
+  structureJs_base : 'scripts/structureJs/',    //default: 'structureJS/'
+  module_base : 'scripts/structureJs/Modules/', //default: 'Modules/'
+  global_base : 'scripts/structureJs/lib/',     //default: 'lib/'
+  directory_aliases : {driver : 'drivers/'},    //default: undefined
+  commons : ['Util'],                           //default: []
+  globals : ['nastyGloablPollution']            //default: []
+},
+{
+  download_minified : false,                    //default: false
+  minified_output_tag_id : 'minified'           //default: 'minified'
+});
 ```
-`structureJs_base` - (required) Path to where structureJS lives.
+`structureJs_base` - Path to where structureJS lives.
 
-`module_base` - (required) Defualt path to all files your app uses.
+`module_base` -  Defualt path to all files your app uses.
 
-`global_base` - (required) Path to the files you declare in the `globals` config array.
+`global_base` -  Path to the files you declare in the `globals` config array.
 
-`commons` - (optional) Names of files your app uses. These modules are available to all the other modules of you app. Basically declare your utility scripts here. **Can be an empty array.**
+`commons` -  Names of files your app uses. These modules are available to all the other modules of you app. Basically declare your utility scripts here. **Can be an empty array.**
 
-`globals` - (optional) File names of scripts your app will use globally. WARNING: These files will pollute the global namespace. In some cases you may be OK with that so I put the option in here to support that. **Can be an empty array.**
+`globals` -  File names of scripts your app will use globally. WARNING: These files will pollute the global namespace. In some cases you may be OK with that so I put the option in here to support that. **Can be an empty array.**
 
-`directory_aliases` - (optional) Path to other files in your app. See instructions below
+`directory_aliases` - Path to other files in your app. See instructions below
+
+`download_minified` - When set to true, structureJS will automatically download the results of minification to a file if your browser will allow it.
+
+`minified_output_tag_id` - In the event that your browser won't let you download your minification results and does not have a console to print them to, you may set this option to the `id` attribute of a `<div>` tag in you HTML and structureJS will print the results there.
 
 #### Directory Aliasing ####
 
 By default structureJS give you two places to put your app's files, `module_base` and `global_base`. You may want to use file from other locations. For example, you may have your driver scripts containing the application logic. These aren't modules so you probably wouldn't want to dump them into the default `Modules/` folder. Say you want to put them in a folder one level above your HTML page in a folder called `drivers/`.
 
-Add the following to the config object:
+Use the `structureJS.configure(Object configSettings [, Object optionsSetting])` function to configure the alias.
 ```javascript
-structureJS.config = {
+structureJS.configure({
  //other config object stuff
  directory_aliases : {driver : '../drivers/'},
  //other config object stuff
-};
+});
 ````
 
 Now when you declare the file in your manifest you could put `driver` in front of the filename instead of `../drivers/` like so: 
@@ -124,11 +136,11 @@ Another great use of aliasing is it allows you to keep your module collection ou
 For example, you could keep your module collection somewhere on your server and alias your module import directory to access them.
 
 ```javascript
-structureJS.config = {
+structureJS.configure({
  //other config object stuff
  directory_aliases : {mod-lib : '../../module_repo/'},
  //other config object stuff
-};
+});
 ```
 
 **NOTE:** All paths are relative to the location of HTML file the structureJS script tag.
@@ -191,7 +203,7 @@ structureJS.module('module1', function(require){
 
 A module could be a class or it could be some logic or anything you want it to be. `this` inside modules is the window object so you can operate on that level if you wish. Making changes to the DOM using jQuery would be a good example of this.
 
-**NOTE: **Currently, any imports declared using `structureJS.module()` must return a value. If your module doesn't need to to return anything to be used by other parts of you app, then you should probably not use a module. See **Using Require Function In Non-Modules** for info on how to utilize modules in non-module files.
+**NOTE:** Currently, any imports declared using `structureJS.module()` must return a value. If your module doesn't need to to return anything to be used by other parts of you app, then you should probably not use a module. See **Using Require Function In Non-Modules** for info on how to utilize modules in non-module files.
 
 ### Maintainability Through Module Semantics ###
 
