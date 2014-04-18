@@ -1,0 +1,174 @@
+<html>
+<script>
+/*SOFT GROUP EXAMPLE
+  grouped together at runtime. 
+  essentially an alias for a dependency chain.
+*/
+structureJS.declareGroup('UI-Events');
+//OR
+structureJS.declareGroup({
+    name : 'UI-Events', 
+    description : 'Designed to handle responsive UI functions'
+  });
+
+//populate group  
+structureJS.UI-Events.declare('KeyListener');
+structureJS.UI-Events.declare('MouseListener');
+structureJS.UI-Events.declare('DragResize', ['MouseListener']);
+
+
+/*
+  UI-Events._needTree = {
+    KeyListener : [], 
+    MouseListener : [], 
+    DragResize : ['MouseListener']
+    }
+
+*/
+//declaring remote group
+structureJS.declare('remote/group-UI');
+
+/*
+  
+  'remote' is a reserved alias pointing to my js-module.info
+  website with a repo of modules
+  */
+
+//Driver loading soft groups
+structureJS.declare('main', ['UI-Events', 'Responsive',
+                            'Animate', 'Database']);
+
+
+//Driver loading hard group
+structureJS.declare('main', ['group-UI']);
+//Driver loading remote hard group
+structureJS.declare('main', ['remote/group-UI']);
+
+
+/* HARD GROUP EXAMPLE
+  A Hard group is an atomic set of modules. Dependency chain
+  is sequentially resolved 
+  
+  Notice no require passed to group. This keeps it atomic and discourages
+  business logic put in here
+  */
+
+/*group-UI.js*/
+structureJS.group(
+  {
+    name : 'UI', 
+    description : 'Designed to handle responsive UI functions'
+  }, function(info){
+
+    structureJS.module(
+    {
+      name : 'KeyListener', 
+      type : 'Event Listener',
+      description : 'Listens for key presses and translates keycodes into\
+                     letters. Must have access to document context.'}
+                     
+   , function(require){
+    //KeyListener Stuff
+   }, info);
+   structureJS.module(
+    {
+      name : 'MouseListener', 
+      type : 'Event Listener',
+      description : 'Listens for various mouse events\
+                     Must have access to document context.'}
+                     
+   , function(require){
+    //MouseListener Stuff
+   }, info);
+   structureJS.module(
+    {
+      name : 'DragResize', 
+      type : 'UI Controller',
+      description : 'Listens for key presses and translates keycodes into\
+                     letters. Must have access to document context.'}
+                     
+   , function(require){
+    //DragResize Stuff
+   }, info);
+  
+  });
+  
+  structureJS.group = function(configObj, func){
+    this._gorups.push(configObj);
+    func.call(null, configObj);
+  }
+  
+  /*alter module to accpet 3rd param that attaches group info to it*/
+  
+  </script>
+  <!-- Use these tags in separate pages as commands
+    
+    HTML interface 
+      The structureJS base folder will contain HTML files that will be
+      used to trigger vairious functions like minifying project or exporting
+      softgroups.
+    
+    Rest API local functions
+      Uses PHP locally to load pages with configurable script 
+      tags to preform vairous functions
+  -->
+  
+  <!--soft-to-hard group export -->
+  
+  
+  <!--1. use name and look for structureJS[name]. There should reside an
+      array ['file1', 'file2']
+      
+      2. gather the source of each file in array
+      
+      3. use regex group template to construct a hard group as detailed above
+
+      4. Output each hard group to new html pages
+      
+      NOTE: any multi-file export should automatically disable downloading of exports
+            if it is enabled
+       -->
+       
+  <!--REST API   
+      Use html interface to let use configure softgroup export
+          localhost/structureJs/export?sg=1&uglify=0&list=' + list;
+      
+      Opening results of mulitple exports/minification
+      structreJSCompress.js uses this to both minified and converted soft groups  
+        window.open('localhost/structureJs/open_export?contents=' + exportContent);
+        -->
+  <script id="structureJS" 
+        data-manifest="manifest"
+        data-config="config"
+        data-uglify="false"
+        data-export-softgroup="UI-Events, Animate"
+        src="../lib/structureJS/structureJS.js"/>
+  </script>
+
+  
+  <!--project export (with uglify-target specified)
+    
+    X.) '*' as value of 'data-uglify-target' means minify whole project
+    X.) comma-separated list for multiple files
+         
+    Use html interface to let use configure softgroup export
+      localhost/structureJs/export?sg=0&uglify=0&list=' + list;
+  -->
+  <script id="structureJS" 
+        data-manifest="manifest"
+        data-config="config"
+        data-uglify="true"
+        data-uglify-target="*"
+        src="../lib/structureJS/structureJS.js"/>
+  </script>
+  
+  <script id="structureJS" 
+        data-manifest="manifest"
+        data-config="config"
+        data-uglify="true"
+        data-uglify-target="file1,file2,file3"
+        src="../lib/structureJS/structureJS.js"/>
+  </script>
+  
+  <!-- -->
+  </html>

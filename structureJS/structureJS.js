@@ -22,6 +22,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
   _files : [],
   _exportOrder : [],
   _modules : {},
+  _groupNames: [],
   _cache : {},
   //Constants
   UGLYFY_FILENAME : 'uglifyjs.min',
@@ -33,6 +34,21 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     if(arguments.length == 2 && key && value)  
       this._cache[key] = value
     return returnVal;
+  },
+  extend : function(target, src){
+    if(typeof target !== 'object' || typeof src !== 'object')
+      throw 'Error: extend param is not an an oject';
+    for(var prop in src){
+      target[prop] = src[prop];
+    }
+  },
+  getFilename : function(input){
+    var fileName = '';
+    if( input && typeof input === 'object' )
+      fileName = Object.keys(input)[0];
+    else if(typeof input === 'string')
+      fileName = input;
+    return fileName;
   },
   resolveFilePath : function(input){
     var config = this.config;
@@ -156,6 +172,8 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
   },
   
   orderImports : function(needTree){
+    this.detectCircularDependency(needTree);
+    var _this = this;
     var modules = [];
     //convert needTree to array for easier processing
     for(var i in needTree){
@@ -163,10 +181,11 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
       modObj[i] = needTree[i];
       modules.push( modObj );
     }
-    
-    /*INTERNAL FUNCTIONS*/
+
+    /*INTERNAL FUNCTIONS
+     NOTE: 'this' refers to window inside these functions*/
     function getModName(modObj){
-      return Object.keys(modObj)[0];
+      return _this.getFilename(modObj);
     }
     
     function printOrder(msg){
@@ -202,13 +221,15 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
       var targetName = getModName(modules[targetIndex]);
       console.log('Moving ' + getModName(obj) + '('+objIndex+') in front of ' + targetName + '('+targetIndex+')');
       var resultArr = [];
-      for(var i = 0; i < modules.length; i++){
-        
-        if(i < targetIndex ){
+      for(var i = 0; i <= modules.length; i++){
+        if(i < targetIndex && _this.getFilename(modules[i]) != _this.getFilename(obj)){
+          //console.log(' < pushing : ' + _this.getFilename(modules[i]) + ' @ index ' + i);
           resultArr.push(modules[i]);
-        }else if(i == targetIndex){
+        }else if(i == targetIndex ){
+          //console.log('== pushing : ' + _this.getFilename(obj) + ' @ index ' + i);
           resultArr.push(obj);
-        }else if(i > targetIndex){
+        }else if(i > targetIndex && _this.getFilename(modules[i-1]) != _this.getFilename(obj)){
+          //console.log(' > pushing : ' + _this.getFilename(modules[i-1]) + ' @ index ' + i);
           resultArr.push(modules[i-1]);
         }
       }
@@ -238,16 +259,65 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
 
     return modules;
   },
+  decodeInfoObj : function(infoObj){
+    var results = {name : ''};
+    if(typeof infoObj === 'string')
+      results.name = infoObj;
+    else if(typeof infoObj === 'object'){
+      if(typeof infoObj.name == 'undefined')
+        throw 'Configuration Object Must Have Name Property';
+      else
+        this.extend(results, infoObj);
+    }
+    return results;
+  },
   declare : function(name, dependencies){
+    /*Add error checking here for name*/
     if(typeof dependencies == 'undefined')
       dependencies = [];
     this._needTree[name] = dependencies;
-  },
-
-  resolveDependencies : function(){
-    this.detectCircularDependency(this._needTree);//catch error and fail gracefully
-    this._files = this.orderImports(this._needTree, this._files);
     
+  },
+  declareGroup : function(groupInfo){
+    var _this = this;
+    var infoObj = this.decodeInfoObj(groupInfo);
+    this._groupNames.push(infoObj.name);
+
+    this[infoObj.name] = {};
+    var groupNamespace = this[infoObj.name];//make structureJS.<group name> to declare files on
+    groupNamespace['_needTree'] = {};
+    /*Copying functions TODO: do this prototypically*/
+    groupNamespace.declare = function(name, dependencies){
+    /*uses deckare to put dependeny tree together on <group name>._needTree
+    we would resolve this separately to construct hard group*/
+      _this.declare.apply(groupNamespace, [name, dependencies]);
+      /*add to regular _needtree to resolve in top-level chain. After that
+      we go through resolved chain and resolve group names then splice
+      that chain into the top-level chain*/
+      
+      _this.declare(name, dependencies);
+    };
+  },
+  resolveDependencies : function(){
+    this._files = this.orderImports(this._needTree);
+    /*Turn to string for faster existence testing*/
+    var groupNames = this._groupNames.join();
+    var files = this._files;
+    var resolvedGroup = null;
+    var match = null;
+    var fileName = '';
+    /*Resolve group chains and splice results into top 
+    level chain*/
+
+    for(var i = 0; i < files.length; i++){
+      fileName = this.getFilename(files[i]);
+      //console.log(fileName);
+      //console.log( new RegExp(groupNames).exec(fileName) );
+      if( match = new RegExp(groupNames).exec(fileName) ){
+        resolvedGroup = this.orderImports(this[match[0]]._needTree);
+        console.log(resolvedGroup);
+      }
+    }
     function printOrder(msg, modules){
       function getModName(modObj){
         return Object.keys(modObj)[0];
@@ -278,20 +348,10 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
       throw 'Module Must Have A Function As It\'s Definition';
       
     var _this = this;
-    var modName = null;
+    var infoObj = null;
     var moduleWrapper = {type : 'unknown'};
     
-    if(typeof modConfig === 'string')
-      modName = modConfig;
-    else if(typeof modConfig === 'object'){
-      if(typeof modConfig.name == 'undefined')
-        throw 'Module Configuration Object Must Have Name Property';
-      else
-        modName =  modConfig.name;
-        
-      if(typeof modConfig.type != 'undefined')
-        moduleWrapper['type'] = modConfig.type;
-    }
+    infoObj = this.decodeInfoObj(modConfig);
     function require(depName){
       return _this._modules[depName]['module'];
     };
@@ -299,18 +359,15 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     require.amd = require;
     require._class = require;
     structureJS.require = require;
-    /*Introspection function of require obj*/
-    require.getType = function(depName){
-      return _this._modules[depName]['type'];
-    }
+
 
     /*Put the return val of the module function into modules object
     so they can be retrieved later using 'require'*/
     moduleWrapper['module'] = executeModule.call(null, require); 
     if(typeof moduleWrapper['module'] == 'undefined')
-      throw modName + ' FAILED: Module Function Definition Must Return Something';
+      throw infoObj.name + ' FAILED: Module Function Definition Must Return Something';
     
-    this._modules[modName] = moduleWrapper;
+    this._modules[infoObj.name] = moduleWrapper;
   },
   
   /*I split this up because I want the module importation via require to be transparent
@@ -323,7 +380,16 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     //console.log('AMD: Loading ' + modName);
     this._modules[modName] = moduleWrapper;
   },
-  
+  /*This is for hard groups*/
+  group : function(groupConfig, /*function*/ groupModule){
+    if(typeof groupConfig == 'undefined' || typeof groupConfig === 'function')
+      throw 'Group Must Have Configuration Object Or Name String';
+    if(typeof groupModule !== 'function')
+      throw 'Group Must Have A Function As It\'s Definition';
+    /*Doesn't return anything, simply executes modules inside the group*/
+    executeModule.call(null, this.decodeInfoObj(groupConfig) ); 
+
+  },
   loadConfigAndManifest : function(onLoaded){
   
     var structureTag = document.getElementById('structureJS');//returns null if not found
@@ -365,13 +431,8 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
   configure : function(configObj, optionsObj){
     var config = this.config;
     var options = this.options;
-    for(var key in configObj){
-      config[key] = configObj[key];
-    }
-    for(var key in optionsObj){
-      options[key] = optionsObj[key];
-      
-    }
+    this.extend(config, configObj);
+    this.extend(options, optionsObj);
   }
 };
 
