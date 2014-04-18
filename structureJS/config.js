@@ -1,8 +1,13 @@
-structureJS.config = {
+structureJS.configure(
+{
   structureJS_base : 'structureJS/',
-  module_base : 'Modules/',
+  module_base : 'Modules/', 
   global_base : 'lib/',
   directory_aliases : {main : 'drivers/'},
-  commons : [],
+  commons : [], 
   globals : []
-};
+},{
+  download_minified : false,
+  minified_output_tag_id : 'mixy'
+
+});
