@@ -1,5 +1,6 @@
+structureJS.declare('C', ['UI_Events']);  
 structureJS.declare('D',['C']);
-structureJS.declare('C');  
+
 
 structureJS.declareGroup('UI_Events');
 //OR

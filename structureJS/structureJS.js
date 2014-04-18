@@ -35,6 +35,13 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
       this._cache[key] = value
     return returnVal;
   },
+  /*Untested*/
+  inArray : function(word, joinedArray){
+    var retVal = false;
+    if( new RegExp(joinedArray).test(word) )
+      retVal = true;
+    return retVal;
+  },
   extend : function(target, src){
     if(typeof target !== 'object' || typeof src !== 'object')
       throw 'Error: extend param is not an an oject';
@@ -250,9 +257,10 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
         childName = parentDeps[i];
         if(parentName === childName)
           continue;
-        
+          
         if( getIndex(childName) > parentIndex){
           insertBefore( getModObj(childName), getIndex(parentName));
+          --i1;
         }
       }
     }
@@ -272,6 +280,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     return results;
   },
   declare : function(name, dependencies){
+    console.log('group declare: ' + name);
     /*Add error checking here for name*/
     if(typeof dependencies == 'undefined')
       dependencies = [];
@@ -282,7 +291,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     var _this = this;
     var infoObj = this.decodeInfoObj(groupInfo);
     this._groupNames.push(infoObj.name);
-
+    this.declare(infoObj.name);
     this[infoObj.name] = {};
     var groupNamespace = this[infoObj.name];//make structureJS.<group name> to declare files on
     groupNamespace['_needTree'] = {};
@@ -303,19 +312,57 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     /*Turn to string for faster existence testing*/
     var groupNames = this._groupNames.join();
     var files = this._files;
-    var resolvedGroup = null;
+    var filesCopy = files.slice(0, files.length);
     var match = null;
     var fileName = '';
+    var removeFileName = '';
+    var beforeInsert = null;
+    var afterInsert = null;
+    var resultArray = null;
+    var joinedResolvedGroup = '';
+    var groupComponents = null;
+    var removedComponents = 0;
     /*Resolve group chains and splice results into top 
     level chain*/
 
     for(var i = 0; i < files.length; i++){
       fileName = this.getFilename(files[i]);
-      //console.log(fileName);
-      //console.log( new RegExp(groupNames).exec(fileName) );
-      if( match = new RegExp(groupNames).exec(fileName) ){
-        resolvedGroup = this.orderImports(this[match[0]]._needTree);
-        console.log(resolvedGroup);
+      //We found a reference to a soft group in top-level chain (TLC)
+      if( this.inArray(fileName, groupNames) ){//probably can replace with indexOf
+        /*Remove group's components from TLC*/
+        
+        groupComponents = this[fileName]._needTree;
+
+        for(var component in groupComponents){
+          
+          for(var i2 = 0; i2 < filesCopy.length; i2++){
+            removeFileName = this.getFilename(filesCopy[i2]);
+
+            if(removeFileName == component){
+              console.log('removing: ' + removeFileName);
+              filesCopy.splice(i2, 1);
+            }
+            
+          }
+          
+
+        }
+        console.log(filesCopy);
+
+        files = filesCopy;
+        console.log('INSIDE');
+        console.log(files);
+        resolvedGroup = this.orderImports(this[fileName]._needTree);
+        beforeInsert = files.slice(0,(i>0)? i-1 : 0);
+        console.log(beforeInsert);
+        resultArray = beforeInsert.concat(resolvedGroup);
+        console.log(resultArray);
+        afterInsert = files.slice(((i+1)<files.length)?(i+1) : files.length,files.length);
+        console.log(afterInsert);
+        resultArray = resultArray.concat(afterInsert);
+        console.log(resultArray);
+        this._files = resultArray;
+
       }
     }
     function printOrder(msg, modules){
