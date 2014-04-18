@@ -1,13 +1,16 @@
 structureJS
 ===========
 
-1. Break your app up into seperate files.
-2. Create  reusable, configurable modules.
+Use structureJS to:
+
+1. Break your app up into separate files.
+2. Create reusable, configurable modules.
 3. Declare the structure of the app in any order and structureJS will resolve order dependency automatically.
-4. Minify and combine all modules and files into a single file right from your browser.
+4. Minify and combine all modules and files into a single file right from your browser. Deploy in seconds not minutes
 5. Utilize module dependencies easily and add semantic meaning to your modules
 6. Only puts one variable into the global namespace
 7. Partially AMD compliant (works with jQuery AMD for now, more to come)
+8. Prioritized logging and custom logging functions
 
 
 This 11kB (uncompressed) program allows you to break up complex Javacript apps into multiple files and reusable modules. It handles the complexity of making sure your files are imported in the right order. Use a manifest to modify the entire structure of you app in one file. 
@@ -61,15 +64,14 @@ The typical directory structure looks like:
 
 ### Importing Files ###
 
-You can tell structureJS to import files using a call to `structureJS.module()`, `structureJS.config.commons`, or `structureJS.config.globals`. The difference between the methods is that if you use `structureJS.module()` you are creating a module that can be accessed by other modules using the `require` function described later. 
+You can tell structureJS to import files using a call to `structureJS.define()` (in manfiset.js), `structureJS.config.commons`, or `structureJS.config.globals`. The difference between the methods is that if you use `structureJS.define()` you are creating a module that can be accessed by other modules using the `require` function described later. 
 
-The files you declare for import using `structureJS.config.commons` or `structureJS.config.globals` won't be automatically converted to modules unless they are AMD compliant (like jQuery for example). That being said, the file declared there can have modules created using `structureJS.module()`. 
+The files you declare for import using `structureJS.config.commons` or `structureJS.config.globals` won't be automatically converted to modules unless they are AMD compliant (like jQuery for example). That being said, the file declared there can create and utilize modules created using `structureJS.module()`. 
 
 #### Multiple Modules In A Single File ####
 
 This is possible. Be aware that you loose the ability to have the import order automatically resolved by structureJS. Any intra-file dependencies have to be resolved by you by putting the dependencies above their dependents.
 
-**NOTE: **Currently, any imports declared using `structureJS.module()` must return a value. 
 
 ### Example Config File ###
 
@@ -188,6 +190,8 @@ structureJS.module('module1', function(require){
 ```
 
 A module could be a class or it could be some logic or anything you want it to be. `this` inside modules is the window object so you can operate on that level if you wish. Making changes to the DOM using jQuery would be a good example of this.
+
+**NOTE: **Currently, any imports declared using `structureJS.module()` must return a value. If your module doesn't need to to return anything to be used by other parts of you app, then you should probably not use a module. See **Using Require Function In Non-Modules** for info on how to utilize modules in non-module files.
 
 ### Maintainability Through Module Semantics ###
 
