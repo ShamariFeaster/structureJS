@@ -11,3 +11,4 @@ structureJS.configure(
   minified_output_tag_id : 'mixy'
 
 });
+

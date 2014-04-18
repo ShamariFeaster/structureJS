@@ -366,14 +366,11 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     var config = this.config;
     var options = this.options;
     for(var key in configObj){
-      if(typeof config[key] != 'undefined'){
-        config[key] = configObj[key];
-      }
+      config[key] = configObj[key];
     }
     for(var key in optionsObj){
-      if(typeof options[key] != 'undefined'){
-        options[key] = optionsObj[key];
-      }
+      options[key] = optionsObj[key];
+      
     }
   }
 };
