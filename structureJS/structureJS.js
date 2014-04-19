@@ -35,13 +35,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
       this._cache[key] = value
     return returnVal;
   },
-  /*Untested*/
-  inArray : function(word, joinedArray){
-    var retVal = false;
-    if( new RegExp(joinedArray).test(word) )
-      retVal = true;
-    return retVal;
-  },
+
   extend : function(target, src){
     if(typeof target !== 'object' || typeof src !== 'object')
       throw 'Error: extend param is not an an oject';
@@ -260,7 +254,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
           
         if( getIndex(childName) > parentIndex){
           insertBefore( getModObj(childName), getIndex(parentName));
-          --i1;
+          i1 = ( (i1 - 1) > -1)? i1-1 : 0;//don't let i1 go negative
         }
       }
     }
@@ -297,20 +291,35 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     groupNamespace['_needTree'] = {};
     /*Copying functions TODO: do this prototypically*/
     groupNamespace.declare = function(name, dependencies){
-    /*uses deckare to put dependeny tree together on <group name>._needTree
+    /*uses declare to put dependeny tree together on <group name>._needTree
     we would resolve this separately to construct hard group*/
       _this.declare.apply(groupNamespace, [name, dependencies]);
       /*add to regular _needtree to resolve in top-level chain. After that
-      we go through resolved chain and resolve group names then splice
-      that chain into the top-level chain*/
+      we go through resolved chain and then splice in the resolve group names
+      into the top-level chain*/
       
       _this.declare(name, dependencies);
     };
   },
+
   resolveDependencies : function(){
-    this._files = this.orderImports(this._needTree);
+    function printOrder(msg, modules){
+      function getModName(modObj){
+        var retVal = modObj;
+        if(typeof modObj === 'object')
+          retVal = Object.keys(modObj)[0];
+        return retVal;
+      }
+    
+      var output = msg || '';
+      for(var i = 0; i < modules.length; i++){
+        output += getModName( modules[i] ) + ', ';
+      }
+      console.log(output);
+    }
+  
+    this._files = this.orderImports(this._needTree);   
     /*Turn to string for faster existence testing*/
-    var groupNames = this._groupNames.join();
     var files = this._files;
     var filesCopy = files.slice(0, files.length);
     var match = null;
@@ -327,55 +336,58 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
 
     for(var i = 0; i < files.length; i++){
       fileName = this.getFilename(files[i]);
+      
       //We found a reference to a soft group in top-level chain (TLC)
-      if( this.inArray(fileName, groupNames) ){//probably can replace with indexOf
+      if( this._groupNames.indexOf(fileName) > -1) {
         /*Remove group's components from TLC*/
-        
+        console.log('\nResolving Group ' + fileName + ' Refernce');
         groupComponents = this[fileName]._needTree;
-
+        /*Remove Group Refs*/
         for(var component in groupComponents){
           
-          for(var i2 = 0; i2 < filesCopy.length; i2++){
-            removeFileName = this.getFilename(filesCopy[i2]);
+          for(var i2 = 0; i2 < files.length; i2++){
+            removeFileName = this.getFilename(files[i2]);
 
             if(removeFileName == component){
-              console.log('removing: ' + removeFileName);
-              filesCopy.splice(i2, 1);
+              console.log('Group: '+fileName+', removing: ' + removeFileName);
+              files.splice(i2, 1);
+              //i--;
+              /*Splice in group array*/
+              //files = files;
             }
             
           }
           
 
         }
-        console.log(filesCopy);
+        
 
-        files = filesCopy;
-        console.log('INSIDE');
-        console.log(files);
+        printOrder('Files: ',files);
         resolvedGroup = this.orderImports(this[fileName]._needTree);
-        beforeInsert = files.slice(0,(i>0)? i-1 : 0);
-        console.log(beforeInsert);
+
+
+        
+        beforeInsert = files.slice(0,(i>0)? i : 0);
+        printOrder('Before Insert: ',beforeInsert);
+        
+        
+        afterInsert = files.slice(((i+1)<files.length)?(i+1) : files.length, files.length);
+        printOrder('After Insert: ',afterInsert);
+
         resultArray = beforeInsert.concat(resolvedGroup);
-        console.log(resultArray);
-        afterInsert = files.slice(((i+1)<files.length)?(i+1) : files.length,files.length);
-        console.log(afterInsert);
+        printOrder('Before Insert +  Resolved: ',resultArray);
+
         resultArray = resultArray.concat(afterInsert);
-        console.log(resultArray);
-        this._files = resultArray;
+        
+        printOrder('Final Result: ',resultArray);
+        
+        files = resultArray;
 
       }
     }
-    function printOrder(msg, modules){
-      function getModName(modObj){
-        return Object.keys(modObj)[0];
-      }
     
-      var output = msg || '';
-      for(var i = 0; i < modules.length; i++){
-        output += getModName( modules[i] ) + ',';
-      }
-      console.log(output);
-    }
+    this._files = files;
+    
     
     printOrder('Resolved Order: ', this._files);
     this.loadModules(this.config);
@@ -400,7 +412,10 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     
     infoObj = this.decodeInfoObj(modConfig);
     function require(depName){
-      return _this._modules[depName]['module'];
+      var retVal = null;
+      if( _this._modules[depName] )
+      retVal = _this._modules[depName]['module'];
+      return retVal;
     };
     /*aliases that let user's add semantic meaning to thier require calls*/
     require.amd = require;
