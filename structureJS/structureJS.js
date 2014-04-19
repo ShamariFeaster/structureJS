@@ -242,7 +242,12 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     var parentName = '';
     var parentDeps = null;
     var childName = '';
+    var insertPerformed = false;
     for(var i1 = 0; i1 < modules.length; i1++){
+      if(insertPerformed){//have to reset at top or esle we can never set i back to 0
+        i1 = ( (i1 - 2) > -1)? i1-2 : 0;//don't let i1 go negative
+        insertPerformed = false;
+      }
       parentName = getModName(modules[i1]);
       parentIndex = getIndex(parentName);
       parentDeps = getModDeps(parentName);
@@ -251,10 +256,12 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
         childName = parentDeps[i];
         if(parentName === childName)
           continue;
-          
+        /*If we push dependencies in front of ourself then we need to
+        set index back to make sure we run resolution on my deps or else
+        we won't ever resolve my deps*/  
         if( getIndex(childName) > parentIndex){
           insertBefore( getModObj(childName), getIndex(parentName));
-          i1 = ( (i1 - 1) > -1)? i1-1 : 0;//don't let i1 go negative
+          insertPerformed = true;
         }
       }
     }
@@ -274,7 +281,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     return results;
   },
   declare : function(name, dependencies){
-    console.log('group declare: ' + name);
+    //console.log('group declare: ' + name);
     /*Add error checking here for name*/
     if(typeof dependencies == 'undefined')
       dependencies = [];
@@ -360,16 +367,12 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
           
 
         }
-        
 
         printOrder('Files: ',files);
         resolvedGroup = this.orderImports(this[fileName]._needTree);
-
-
-        
+  
         beforeInsert = files.slice(0,(i>0)? i : 0);
         printOrder('Before Insert: ',beforeInsert);
-        
         
         afterInsert = files.slice(((i+1)<files.length)?(i+1) : files.length, files.length);
         printOrder('After Insert: ',afterInsert);
