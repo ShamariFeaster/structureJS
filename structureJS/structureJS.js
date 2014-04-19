@@ -17,6 +17,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     },
     uglifyMode : false,
     compressedMode : false,
+    exportFiles : '',
   //GENERIC ENVIRNMENT
   _needTree : {},
   _files : [],
@@ -27,6 +28,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
   //Constants
   UGLYFY_FILENAME : 'uglifyjs.min',
   COMPRESSION_FILENAME : 'structureJSCompress',
+  EXPORT_FILENAME : 'structureJSexport',
   cache : function(key, value){
     var returnVal = null;
     if(arguments.length == 1 && this._cache[key])
@@ -52,8 +54,9 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     return fileName;
   },
   resolveFilePath : function(input){
+    if(typeof input == 'undefined')
+      return '';
     var config = this.config;
-
     function resolveDirectoryAliases(input, defaultBase){
       var aliases = config.directory_aliases;
       var results = defaultBase + input + '.js';
@@ -77,7 +80,8 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     var filePath = '';
     if( input && typeof input === 'object' )
       filePath = resolveDirectoryAliases(Object.keys(input)[0], config.module_base);//config.module_base + Object.keys(input)[0] + '.js';
-    else if(input == this.UGLYFY_FILENAME || input == this.COMPRESSION_FILENAME)
+    else if(input == this.UGLYFY_FILENAME || input == this.COMPRESSION_FILENAME
+                                          || input == this.EXPORT_FILENAME)
       filePath = resolveDirectoryAliases(input, config.structureJS_base);//config.structureJS_base + input + '.js';
     else if(typeof input === 'string')
       filePath = resolveDirectoryAliases(input, config.global_base)//config.global_base + input + '.js';
@@ -85,6 +89,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
       return filePath;
   },
   loadScript : function(url, callback){
+    console.log('Loading: ' + url);
       var head = document.getElementsByTagName('head')[0];
       var script = document.createElement('script');
       script.type = 'text/javascript';
@@ -108,7 +113,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     if(_this.uglifyMode == true) {
       globals.unshift('uglifyjs.min');
     }
-
+    
     /*Put globals at the front of the line.
     Have to deep copy export order because we consume
     it here. Shallow leaves us with empty exports*/
@@ -116,23 +121,25 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     for(var i = 0; i < _this._files.length; i++){
       _this._exportOrder.push(_this.resolveFilePath( _this._files[i] ));
     }
-
+    
     //recursive callback
     var callback = function(){
       var filePath = _this.resolveFilePath( _this._files.shift() );
-      
       if(filePath){
-         console.log('Loading: ' + filePath);
         _this.loadScript(filePath, callback);
       }else if(_this.uglifyMode == true){
         _this.loadScript(_this.resolveFilePath('structureJSCompress'), function(){
+          console.log('Modules Done Loading. Enjoy structureJS!');
+        });
+      }else if(_this.exportFiles != ''){
+        _this.loadScript(_this.resolveFilePath('structureJSexport'), function(){
           console.log('Modules Done Loading. Enjoy structureJS!');
         });
       }else{
         console.log('Modules Done Loading. Enjoy structureJS!');
       }
     }
-
+    console.log(_this._files);
     _this.loadScript( this.resolveFilePath( _this._files.shift() ) , callback );
     
   },
@@ -464,13 +471,17 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     var config = structureTag.getAttribute('data-config');
     var manifest = structureTag.getAttribute('data-manifest');
     var uglify = structureTag.getAttribute('data-uglify');
+    var exportFiles = structureTag.getAttribute('data-export-softgroup');
     var structreJSBase = this.config.structureJS_base;
     if(typeof manifest === 'undefined' || manifest === '' || manifest === null)
       throw 'ERROR: No manifest declared';
       
     if( (typeof uglify === 'undefined' || uglify !== null) && /true/i.test(uglify) == true)
       this.uglifyMode = true;
-      
+    //data-export-softgroup
+    if( exportFiles !== null){
+      this.exportFiles = exportFiles;
+    }
     var _this = this;
     //recursive callback
     var callback = function(){

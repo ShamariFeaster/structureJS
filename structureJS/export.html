@@ -5,19 +5,17 @@
 
 <!-- Development -->
 <!-- -->
-<script id="structureJS" 
-        data-manifest="manifest"
-        data-config="config"
-        data-uglify="false"
-        data-export-softgroup="UI_Events,DB"
-        src="structureJS/structureJS.js"/>
-</script>
 
 
 <!-- Production -->
 <!-- 
 <script id="structureJS" data-is-combined="true" src="combined.js"/>
 -->
+<script>
+var href = window.location.href;
+var match = /.*?exports=(.*)+/.exec(href);
+console.log(match);
+document.write(decodeURI(match[1]));
 </script>
 
 </head>
