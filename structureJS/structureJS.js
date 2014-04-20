@@ -30,6 +30,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
   _groupsRDeps : {},
   _cache : {},
   //Constants
+  NAME : 'structureJS',
   UGLYFY_FILENAME : 'uglifyjs.min',
   COMPRESSION_FILENAME : 'structureJSCompress',
   EXPORT_FILENAME : 'structureJSexport',
@@ -91,6 +92,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
       console.log(_this.printf.apply(null, Array.prototype.slice.call(arguments, 1)));
     }
   },
+  /*@StartDeploymentRemove*/
   /*Internals*/
   getFilename : function(input){
     var fileName = '';
@@ -368,42 +370,6 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     this.printOrder('OrderImports: Ending Order: ', modules);
     return modules;
   },
-  decodeInfoObj : function(infoObj){
-    var results = {name : ''};
-    if(typeof infoObj === 'string')
-      results.name = infoObj;
-    else if(typeof infoObj === 'object'){
-      if(typeof infoObj.name == 'undefined')
-        throw 'Configuration Object Must Have Name Property';
-      else
-        this.extend(results, infoObj);
-    }
-    return results;
-  },
-  declare : function(name, dependencies){
-    /*Add error checking here for name*/
-    if(typeof dependencies == 'undefined')
-      dependencies = [];
-    this._needTree[name] = dependencies;
-    
-  },
-  declareGroup : function(groupInfo){
-    var _this = this;
-    var infoObj = this.decodeInfoObj(groupInfo);
-    this._groupNames.push(infoObj.name);
-    this.declare(infoObj.name);
-    this[infoObj.name] = {};
-    var groupNamespace = this[infoObj.name];//make structureJS.<group name> to declare files on
-    groupNamespace['_needTree'] = {};
-    /*Copying functions TODO: do this prototypically*/
-    groupNamespace.declare = function(name, dependencies){
-      /*uses declare to put dependeny tree together on <group name>._needTree
-      we would resolve this separately to construct hard group*/
-      _this.declare.apply(groupNamespace, [name, dependencies]);
-      /*I don't want to add to TLC because unless user puts group in TLC*/
-      //_this.declare(name, dependencies);
-    };
-  },
   dereferenceGroups : function(files){
     var fileName = '';
     var removeFileName = '';
@@ -465,6 +431,101 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     this.printOrder('Resolved Order: ', this._files);
     this.loadModules(this.config);
   },
+  loadConfigAndManifest : function(onLoaded){
+  
+    var structureTag = document.getElementById('structureJS');//returns null if not found
+    if(typeof structureTag === 'undefined' || structureTag === null)
+      throw 'ERROR: No script tag with ID of "structureJS" which is required';
+
+    var config = structureTag.getAttribute('data-config');
+    var manifest = structureTag.getAttribute('data-manifest');
+    var uglify = structureTag.getAttribute('data-uglify');
+    var uglifyFiles = structureTag.getAttribute('data-uglify-target');
+    var exportFiles = structureTag.getAttribute('data-export-softgroup');
+    var structreJSBase = this.config.structureJS_base;
+    if(typeof manifest === 'undefined' || manifest === '' || manifest === null)
+      throw 'ERROR: No manifest declared';
+      
+    if( (typeof uglify === 'undefined' || uglify !== null) && /true/i.test(uglify) == true)
+      this.uglifyMode = true;
+    //data-export-softgroup
+    if( exportFiles !== null){
+      this.exportFiles = exportFiles;
+    }
+    
+    if( uglifyFiles !== null){
+      this.uglifyFiles = uglifyFiles;
+    }
+    
+    var _this = this;
+    //recursive callback
+    var callback = function(){
+      if(manifest != null){
+        _this.pLog(1,'Loading Manifest: ' + structreJSBase + manifest );
+        _this.loadScript(structreJSBase + manifest + '.js', callback);
+        manifest = null;
+      }else{
+        _this.pLog(1,'Done Loading Manifest And/Or Config Files.');
+        onLoaded.call(_this);
+      }
+    }
+    if(config){
+      this.pLog(1,'Loading Config: ' + structreJSBase + config );
+      this.loadScript( structreJSBase + config + '.js', callback );
+    }else{
+      this.loadScript( structreJSBase + manifest + '.js', function(){
+        onLoaded.call(_this);
+      } );
+    }
+  },
+  /*Prototype for wrapping tlc components in class for cleaner semantics
+    and less use of Object.keys(input)[0] for getting names*/
+  tlcObj : function(name, deps){
+    var _this = {};
+    _this.name = name;
+    _this.deps = deps || [];
+    return _this;
+  },
+  _tlc : function(name, dep){
+    return new this.tlcObj(name, dep);
+  },
+  /*@EndDeploymentRemove*/
+  decodeInfoObj : function(infoObj){
+    var results = {name : ''};
+    if(typeof infoObj === 'string')
+      results.name = infoObj;
+    else if(typeof infoObj === 'object'){
+      if(typeof infoObj.name == 'undefined')
+        throw 'Configuration Object Must Have Name Property';
+      else
+        this.extend(results, infoObj);
+    }
+    return results;
+  },
+  declare : function(name, dependencies){
+    /*Add error checking here for name*/
+    if(typeof dependencies == 'undefined')
+      dependencies = [];
+    this._needTree[name] = dependencies;
+    
+  },
+  declareGroup : function(groupInfo){
+    var _this = this;
+    var infoObj = this.decodeInfoObj(groupInfo);
+    this._groupNames.push(infoObj.name);
+    this.declare(infoObj.name);
+    this[infoObj.name] = {};
+    var groupNamespace = this[infoObj.name];//make structureJS.<group name> to declare files on
+    groupNamespace['_needTree'] = {};
+    /*Copying functions TODO: do this prototypically*/
+    groupNamespace.declare = function(name, dependencies){
+      /*uses declare to put dependeny tree together on <group name>._needTree
+      we would resolve this separately to construct hard group*/
+      _this.declare.apply(groupNamespace, [name, dependencies]);
+      /*I don't want to add to TLC because unless user puts group in TLC*/
+      //_this.declare(name, dependencies);
+    };
+  },
   /*
     the idea behind the 'amd' and '_call' aliases of require function
     is that it allows user to put semantic meaning into their requires.
@@ -525,92 +586,21 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     executeModule.call(null, this.decodeInfoObj(groupConfig) ); 
 
   },
-  loadConfigAndManifest : function(onLoaded){
-  
-    var structureTag = document.getElementById('structureJS');//returns null if not found
-    if(typeof structureTag === 'undefined' || structureTag === null)
-      throw 'ERROR: No script tag with ID of "structureJS" which is required';
-
-    var config = structureTag.getAttribute('data-config');
-    var manifest = structureTag.getAttribute('data-manifest');
-    var uglify = structureTag.getAttribute('data-uglify');
-    var uglifyFiles = structureTag.getAttribute('data-uglify-target');
-    var exportFiles = structureTag.getAttribute('data-export-softgroup');
-    var structreJSBase = this.config.structureJS_base;
-    if(typeof manifest === 'undefined' || manifest === '' || manifest === null)
-      throw 'ERROR: No manifest declared';
-      
-    if( (typeof uglify === 'undefined' || uglify !== null) && /true/i.test(uglify) == true)
-      this.uglifyMode = true;
-    //data-export-softgroup
-    if( exportFiles !== null){
-      this.exportFiles = exportFiles;
-    }
-    
-    if( uglifyFiles !== null){
-      this.uglifyFiles = uglifyFiles;
-    }
-    
-    var _this = this;
-    //recursive callback
-    var callback = function(){
-      if(manifest != null){
-        _this.pLog(1,'Loading Manifest: ' + structreJSBase + manifest );
-        _this.loadScript(structreJSBase + manifest + '.js', callback);
-        manifest = null;
-      }else{
-        _this.pLog(1,'Done Loading Manifest And/Or Config Files.');
-        onLoaded.call(_this);
-      }
-    }
-    if(config){
-      this.pLog(1,'Loading Config: ' + structreJSBase + config );
-      this.loadScript( structreJSBase + config + '.js', callback );
-    }else{
-      this.loadScript( structreJSBase + manifest + '.js', function(){
-        onLoaded.call(_this);
-      } );
-    }
-  },
 
   configure : function(configObj, optionsObj){
     var config = this.config;
     var options = this.options;
     this.extend(config, configObj);
     this.extend(options, optionsObj);
-  },
-  /*Prototype for wrapping tlc components in class for cleaner semantics
-    and less use of Object.keys(input)[0] for getting names*/
-  tlcObj : function(name, deps){
-    var _this = {};
-    _this.name = name;
-    _this.deps = deps || [];
-    return _this;
-  },
-  _tlc : function(name, dep){
-    return new this.tlcObj(name, dep);
   }
 };
 
 (function(window){
-
-  /*Sanity Check*/
-  var structureTag = document.getElementById('structureJS');//returns null if not found
-  if(typeof structureTag === 'undefined' || structureTag === null)
-    throw 'ERROR: No script tag with ID of "structureJS" which is required';
-
-    /*if there is no console or I have turned it off, kill log function*/
+  
+  /*if there is no console or I have turned it off, kill log function*/
   if ( ! window.console || structureJS.options.log == false) 
     window.console = { log: function(){}, logf : function(){} };
   /*Init*/
-  /*if user declares we are using a compressed version of ourself generated by us, then we
-  disable all module loading because structureJSCompress has already included everything*/  
-  var combined = structureTag.getAttribute('data-is-combined');
-  if(typeof combined != 'undefined' && combined !== null && /true/i.test(combined) == true){
-
-  }else{
-    structureJS.loadConfigAndManifest(structureJS.resolveDependencies);
-  }
 
   /*Trying to support AMD for jQuery. Total AMD compliance to come later.
     Becoming AMD compliant is going to require a lot of thought so that's something
@@ -621,5 +611,12 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     window.structureJS.moduleAMD(id, factory);
   };
   window.define.amd = {jQuery : true};
- 
+  
+  /*@StartDeploymentRemove*/
+  /*Sanity Check*/
+  var structureTag = document.getElementById('structureJS');//returns null if not found
+  if(typeof structureTag === 'undefined' || structureTag === null)
+    throw 'ERROR: No script tag with ID of "structureJS" which is required';
+  structureJS.loadConfigAndManifest(structureJS.resolveDependencies);
+  /*@EndDeploymentRemove*/
 })(window);

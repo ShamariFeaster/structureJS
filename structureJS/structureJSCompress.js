@@ -10,6 +10,7 @@ structureJS.module({name: 'structureJSCompress', type : 'Utility'}, function(req
   var thisGroup = null;
   var exportProject = false;
   var fileName = '';
+  var deploymentRegex = /\/\*@StartDeploymentRemove\*\/[.\S\s]*?\/\*@EndDeploymentRemove\*\//g;
   /*Configure
     tab : spaces | \t
     newlines : \n | \r\n
@@ -72,9 +73,7 @@ structureJS.module({name: 'structureJSCompress', type : 'Utility'}, function(req
   function processFileOutput(input){
     return input.replace(/\n/g,'<br>').replace(/  /g,'&nbsp&nbsp&nbsp&nbsp');
   }
-  function processTextReplaceTabs(input){
-    return input.replace(/  /g,'  ');
-  }
+
   /*The scoping on this is INSANE. I honestly don't even understand why it works 
   this way but it does. The callback executes in the context of the xhr request
   but it has access to the scope of the originating function (combineSrcFiles)
@@ -140,8 +139,15 @@ structureJS.module({name: 'structureJSCompress', type : 'Utility'}, function(req
   /*Project Exportation*/
   function combineProjectSrcFiles(fileName){
     function callback(){
-    
-      combinedSrc += compress(this.responseText);
+      var text = this.responseText;
+      /*this.onload.fileName is myself but with state data attached by my calling
+      function. This may be a better way to handle the synchronization & separation 
+      I use on group exports*/
+      if(this.onload.fileName == structureJS.config.structureJS_base +structureJS.NAME+'.js' ){
+        console.log('PROCESSIG DEPLOY VERSION');
+        text = text.replace(deploymentRegex,'');
+      }
+      combinedSrc += compress(text);
       var nextFile = exports.shift();
 
       if(nextFile)
@@ -168,9 +174,11 @@ structureJS.module({name: 'structureJSCompress', type : 'Utility'}, function(req
   }
   
   function getProjectSrc(fileName, callback){
-
     var xhr = new XMLHttpRequest();
     xhr.onload = callback;
+    /*Super sweet way of attaching per-call data to callback function
+    to give each callback a state*/
+    xhr.onload.fileName = fileName;
     xhr.open('get',  fileName, true);
     xhr.send();
   }
@@ -178,7 +186,7 @@ structureJS.module({name: 'structureJSCompress', type : 'Utility'}, function(req
   /*Driver*/
   if(exportProject == true){
     if(structureJS.hasRemotes == false)
-      combineProjectSrcFiles( structureJS.config.structureJS_base + '/structureJS.js' );
+      combineProjectSrcFiles( structureJS.config.structureJS_base +structureJS.NAME+'.js' );
     else{
       throw 'Error: Cannot minify because you are using remote files in the project'; 
     }
