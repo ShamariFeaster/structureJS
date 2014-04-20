@@ -29,6 +29,8 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
   UGLYFY_FILENAME : 'uglifyjs.min',
   COMPRESSION_FILENAME : 'structureJSCompress',
   EXPORT_FILENAME : 'structureJSexport',
+  REMOTE_KEYWORD : 'remote',
+  REMOTE_URL : 'http://deeperhistory.info/structureJS/',
   cache : function(key, value){
     var returnVal = null;
     if(arguments.length == 1 && this._cache[key])
@@ -54,19 +56,28 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     return fileName;
   },
   resolveFilePath : function(input){
+    var _this = this;
+    var remoteRegex = new RegExp('^' +_this.REMOTE_KEYWORD + '\/', 'i');
     if(typeof input == 'undefined')
       return '';
     var config = this.config;
+    /*NOTE: inside inner functions this refers to window*/
     function resolveDirectoryAliases(input, defaultBase){
       var aliases = config.directory_aliases;
-      var results = defaultBase + input + '.js';
-      if(typeof aliases == 'undefined')
-        return results;//default
+      var results = '';
+      /*Before returning replace 'remote' with remote URL*/
+      if(new RegExp(remoteRegex).test(input))
+        results = input.replace(remoteRegex, _this.REMOTE_URL) + '.js';
+      else
+        results = defaultBase + input + '.js';
         
       var matchResult = null;  
-
       var regex = null;
       for(var alias in aliases){
+        //checkl for reserved 'remote' alias
+        if(new RegExp(_this.REMOTE_KEYWORD, 'i').test(alias))
+          throw 'Alias "remote" is reserved. Please rename';
+        
         regex = new RegExp('^' + alias + '\/', 'i');
         matchResult = regex.exec(input);
         
@@ -85,8 +96,8 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
       filePath = resolveDirectoryAliases(input, config.structureJS_base);//config.structureJS_base + input + '.js';
     else if(typeof input === 'string')
       filePath = resolveDirectoryAliases(input, config.global_base)//config.global_base + input + '.js';
-
-      return filePath;
+    
+    return filePath;
   },
   loadScript : function(url, callback){
     console.log('Loading: ' + url);
