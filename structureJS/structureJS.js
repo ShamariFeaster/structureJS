@@ -1,7 +1,8 @@
 var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
   options : {
     download_minified : false,
-    minified_output_tag_id : 'minified'
+    minified_output_tag_id : 'minified',
+    log_priority : 1
   },
   config : {
     structureJS_base : 'structureJS/',
@@ -45,6 +46,40 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
       throw 'Error: extend param is not an an oject';
     for(var prop in src){
       target[prop] = src[prop];
+    }
+  },
+  pLog : function(priority, msg){
+    if(priority <= this.options.log_priority)
+      console.log(msg);
+  },
+  /*NOTE: arguments is not of type array hence the wierd call to splice()*/
+  printf : function(/*has arguments passed in via apply()*/){
+    var returnVal = '';
+    if(arguments.length > 1){
+      var args = null;
+      var result = '';
+      var argIndex = 0;
+      
+      var formattedString = arguments[0];
+      args = Array.prototype.slice.call(arguments, 0);
+      args = args.splice(1, (arguments.length - 1));
+      returnVal += formattedString.replace(/%s/g, function(match, matchOffset, fullString){
+        if(argIndex < args.length){
+          return args[argIndex++];
+        }else{
+          return '%s';
+        }
+      });
+    } 
+
+    return returnVal;
+  },
+  pLogf : function(){
+    var returnVal = '';
+    var _this = this;
+    //priority = arguments[0];
+    if(arguments.length >= 2 && arguments[0] <= this.options.log_priority){
+      console.log(_this.printf.apply(null, Array.prototype.slice.call(arguments, 1)));
     }
   },
   getFilename : function(input){
@@ -100,7 +135,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     return filePath;
   },
   loadScript : function(url, callback){
-    console.log('Loading: ' + url);
+    this.pLog(1,'Loading: ' + url);
       var head = document.getElementsByTagName('head')[0];
       var script = document.createElement('script');
       script.type = 'text/javascript';
@@ -140,17 +175,17 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
         _this.loadScript(filePath, callback);
       }else if(_this.uglifyMode == true){
         _this.loadScript(_this.resolveFilePath('structureJSCompress'), function(){
-          console.log('Modules Done Loading. Enjoy structureJS!');
+          _this.pLog(1,'Modules Done Loading. Enjoy structureJS!');
         });
       }else if(_this.exportFiles != ''){
         _this.loadScript(_this.resolveFilePath('structureJSexport'), function(){
-          console.log('Modules Done Loading. Enjoy structureJS!');
+          _this.pLog(1,'Modules Done Loading. Enjoy structureJS!');
         });
       }else{
-        console.log('Modules Done Loading. Enjoy structureJS!');
+        _this.pLog(1,'Modules Done Loading. Enjoy structureJS!');
       }
     }
-    console.log(_this._files);
+    _this.pLog(3,_this._files);
     _this.loadScript( this.resolveFilePath( _this._files.shift() ) , callback );
     
   },
@@ -166,16 +201,16 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     var modName2 = '';
     var modName3 = '';
     for(var modName1 in needTree){//for every module
-     //console.log('Checking '+modName1+'\'s dependencies');
+     this.pLog(2,'Checking '+modName1+'\'s dependencies');
      
       for(var i1 = 0;i1 < needTree[modName1].length; i1++){//go through it's depenedencies
         modName2 = needTree[modName1][i1];
-        //console.log('Dependency '+i1+' of '+modName1+' is '+ modName2);
+        this.pLog(2,'Dependency '+i1+' of '+modName1+' is '+ modName2);
 
         if(typeof needTree[modName2] !== 'undefined'){//my dependency list
           for(var i2 = 0;i2 < needTree[modName2].length; i2++){//make sure module isn't a dependency of its own dependency
             modName3 = needTree[modName2][i2];
-            //console.log('Checking '+modName2+'\'s dependencies for circular reference to parent '+modName1 );
+            this.pLog(2,'Checking '+modName2+'\'s dependencies for circular reference to parent '+modName1 );
             if(modName1 == modName3){
               throw 'ERROR: CIRCULAR DEPENDENCY: ' + modName1 + ' is a dependency of its own dependency ' + modName2;
             }
@@ -212,7 +247,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
       for(var i = 0; i < modules.length; i++){
         output += getModName( modules[i] ) + ',';
       }
-      console.log(output);
+      _this.pLog(1,output);
     }
     
     printOrder('Starting Order: ', modules);
@@ -238,17 +273,17 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
       var objIndex = getIndex( getModName(obj) );
       var targetObj = getModObj( getModName(modules[targetIndex]) );
       var targetName = getModName(modules[targetIndex]);
-      console.log('Moving ' + getModName(obj) + '('+objIndex+') in front of ' + targetName + '('+targetIndex+')');
+      _this.pLog(2,'Moving ' + getModName(obj) + '('+objIndex+') in front of ' + targetName + '('+targetIndex+')');
       var resultArr = [];
       for(var i = 0; i <= modules.length; i++){
         if(i < targetIndex && _this.getFilename(modules[i]) != _this.getFilename(obj)){
-          //console.log(' < pushing : ' + _this.getFilename(modules[i]) + ' @ index ' + i);
+          _this.pLog(3,' < pushing : ' + _this.getFilename(modules[i]) + ' @ index ' + i);
           resultArr.push(modules[i]);
         }else if(i == targetIndex ){
-          //console.log('== pushing : ' + _this.getFilename(obj) + ' @ index ' + i);
+          _this.pLog(3,'== pushing : ' + _this.getFilename(obj) + ' @ index ' + i);
           resultArr.push(obj);
         }else if(i > targetIndex && _this.getFilename(modules[i-1]) != _this.getFilename(obj)){
-          //console.log(' > pushing : ' + _this.getFilename(modules[i-1]) + ' @ index ' + i);
+          _this.pLog(3,' > pushing : ' + _this.getFilename(modules[i-1]) + ' @ index ' + i);
           resultArr.push(modules[i-1]);
         }
       }
@@ -269,7 +304,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
       parentName = getModName(modules[i1]);
       parentIndex = getIndex(parentName);
       parentDeps = getModDeps(parentName);
-      console.log('Resolving: '+parentName+', Index: ' + i1);
+      this.pLog(3,'Resolving: '+parentName+', Index: ' + i1);
       for(var i = 0; i < parentDeps.length; i++){
         childName = parentDeps[i];
         if(parentName === childName)
@@ -299,7 +334,6 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     return results;
   },
   declare : function(name, dependencies){
-    //console.log('group declare: ' + name);
     /*Add error checking here for name*/
     if(typeof dependencies == 'undefined')
       dependencies = [];
@@ -328,6 +362,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
   },
 
   resolveDependencies : function(){
+    var _this = this;
     function printOrder(msg, modules){
       function getModName(modObj){
         var retVal = modObj;
@@ -340,7 +375,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
       for(var i = 0; i < modules.length; i++){
         output += getModName( modules[i] ) + ', ';
       }
-      console.log(output);
+      _this.pLog(2,output);
     }
   
     this._files = this.orderImports(this._needTree);   
@@ -365,7 +400,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
       //We found a reference to a soft group in top-level chain (TLC)
       if( this._groupNames.indexOf(fileName) > -1) {
         /*Remove group's components from TLC*/
-        console.log('\nResolving Group ' + fileName + ' Refernce');
+        this.pLog(3,'\nResolving Group ' + fileName + ' Refernce');
         groupComponents = this[fileName]._needTree;
         /*Remove Group Refs*/
         for(var component in groupComponents){
@@ -374,7 +409,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
             removeFileName = this.getFilename(files[i2]);
 
             if(removeFileName == component){
-              console.log('Group: '+fileName+', removing: ' + removeFileName);
+              this.pLog(3,'Group: '+fileName+', removing: ' + removeFileName);
               files.splice(i2, 1);
               //i--;
               /*Splice in group array*/
@@ -446,7 +481,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
 
     /*Put the return val of the module function into modules object
     so they can be retrieved later using 'require'*/
-    moduleWrapper['module'] = executeModule.call(null, require); 
+    moduleWrapper['module'] = executeModule.call(this, require); 
     if(typeof moduleWrapper['module'] == 'undefined')
       throw infoObj.name + ' FAILED: Module Function Definition Must Return Something';
     
@@ -460,7 +495,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     moduleWrapper['module'] = executeModule.call(null).call(null);
     if(typeof moduleWrapper['module'] == 'undefined')
       throw 'Module Function Definition Must Return Something';
-    //console.log('AMD: Loading ' + modName);
+    this.pLog(2,'AMD: Loading ' + modName);
     this._modules[modName] = moduleWrapper;
   },
   /*This is for hard groups*/
@@ -497,16 +532,16 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     //recursive callback
     var callback = function(){
       if(manifest != null){
-        console.log('Loading Manifest: ' + structreJSBase + manifest );
+        _this.pLog(1,'Loading Manifest: ' + structreJSBase + manifest );
         _this.loadScript(structreJSBase + manifest + '.js', callback);
         manifest = null;
       }else{
-        console.log('Done Loading Manifest And/Or Config Files.');
+        _this.pLog(1,'Done Loading Manifest And/Or Config Files.');
         onLoaded.call(_this);
       }
     }
     if(config){
-      console.log('Loading Config: ' + structreJSBase + config );
+      this.pLog(1,'Loading Config: ' + structreJSBase + config );
       this.loadScript( structreJSBase + config + '.js', callback );
     }else{
       this.loadScript( structreJSBase + manifest + '.js', function(){
@@ -528,8 +563,8 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
   var structureTag = document.getElementById('structureJS');//returns null if not found
   if(typeof structureTag === 'undefined' || structureTag === null)
     throw 'ERROR: No script tag with ID of "structureJS" which is required';
- 
-  /*if there is no console or I have turned it off, kill log function*/
+
+    /*if there is no console or I have turned it off, kill log function*/
   if ( ! window.console || structureJS.options.log == false) 
     window.console = { log: function(){}, logf : function(){} };
   /*Init*/
