@@ -1,6 +1,6 @@
-structureJS.declare('C');  
+structureJS.declare('C', ['UI_Events','DB']);  
 //structureJS.declare('remote/group-UI');
-structureJS.declare('main/D');
+structureJS.declare('main/D', ['DB']);
 
 
 structureJS.declareGroup({

@@ -42,7 +42,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
       this._cache[key] = value
     return returnVal;
   },
-
+  /*structureJS Utilities*/
   extend : function(target, src){
     if(typeof target !== 'object' || typeof src !== 'object')
       throw 'Error: extend param is not an an oject';
@@ -83,6 +83,22 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     if(arguments.length >= 2 && arguments[0] <= this.options.log_priority){
       console.log(_this.printf.apply(null, Array.prototype.slice.call(arguments, 1)));
     }
+  },
+  /*Internals*/
+  printOrder : function(msg, modules, priority){
+    var priority = (typeof priority == 'undefined') ? 1 : priority;
+    function getModName(modObj){
+      var retVal = modObj;
+      if(typeof modObj === 'object')
+        retVal = Object.keys(modObj)[0];
+      return retVal;
+    }
+  
+    var output = msg || '';
+    for(var i = 0; i < modules.length; i++){
+      output += getModName( modules[i] ) + ', ';
+    }
+    this.pLog(priority,output);
   },
   getFilename : function(input){
     var fileName = '';
@@ -232,25 +248,24 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
  
     return false;
   },
-  
+  /*This function converts our needTree into an array. The array structure is
+  used through out because it is sortable. This function does the dependency
+  sorting*/
   orderImports : function(needTree){
     this.detectCircularDependency(needTree);
     var _this = this;
     var groupsRDeps = this._groupsRDeps;
     var modules = [];
-
     
     //convert needTree to array for easier processing
-
     for(var fileName in needTree){
       var modObj = {};
       modObj[fileName] = needTree[fileName];
+
       /*If you are a group, you have to be listed as a declared
       dependencies to remain in TLC*/
-      
       if(this._groupNames.indexOf(fileName) > -1){
         for(var groupName in groupsRDeps){
-          console.log('comparing ' + fileName + ' to ' + groupName);
           if(fileName == groupName)
             modules.push( modObj );
         }
@@ -267,16 +282,8 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     function getModName(modObj){
       return _this.getFilename(modObj);
     }
-    
-    function printOrder(msg){
-      var output = msg || '';
-      for(var i = 0; i < modules.length; i++){
-        output += getModName( modules[i] ) + ',';
-      }
-      _this.pLog(1,output);
-    }
-    
-    printOrder('Starting Order: ', modules);
+
+    this.printOrder('OrderImports: Starting Order: ', modules);
     
     function getModDeps(modName){
       return needTree[modName];
@@ -344,7 +351,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
         }
       }
     }
-
+    this.printOrder('OrderImports: Ending Order: ', modules);
     return modules;
   },
   decodeInfoObj : function(infoObj){
@@ -376,57 +383,28 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     groupNamespace['_needTree'] = {};
     /*Copying functions TODO: do this prototypically*/
     groupNamespace.declare = function(name, dependencies){
-    /*uses declare to put dependeny tree together on <group name>._needTree
-    we would resolve this separately to construct hard group*/
+      /*uses declare to put dependeny tree together on <group name>._needTree
+      we would resolve this separately to construct hard group*/
       _this.declare.apply(groupNamespace, [name, dependencies]);
       /*I don't want to add to TLC because unless user puts group in TLC*/
-      
       //_this.declare(name, dependencies);
     };
   },
-
-  resolveDependencies : function(){
-    var _this = this;
-    var groupNames = this._groupNames;
-    function printOrder(msg, modules, priority){
-      var priority = (typeof priority == 'undefined') ? 1 : priority;
-      function getModName(modObj){
-        var retVal = modObj;
-        if(typeof modObj === 'object')
-          retVal = Object.keys(modObj)[0];
-        return retVal;
-      }
-    
-      var output = msg || '';
-      for(var i = 0; i < modules.length; i++){
-        output += getModName( modules[i] ) + ', ';
-      }
-      _this.pLog(priority,output);
-    }
-    
-    this._files = this.orderImports(this._needTree);   
-   
-    var files = this._files;
-    var filesCopy = files.slice(0, files.length);
-    var match = null;
+  dereferenceGroups : function(files){
     var fileName = '';
     var removeFileName = '';
     var beforeInsert = null;
     var afterInsert = null;
     var resultArray = null;
-    var joinedResolvedGroup = '';
     var groupComponents = null;
-    var removedComponents = 0;
-   
-    
-    /*Resolve group chains and splice results into top 
-    level chain*/
+  
+    /*Resolve group chains and splice results into TLC*/
     for(var i = 0; i < files.length; i++){
       fileName = this.getFilename(files[i]);
       
       //We found a reference to a soft group in top-level chain (TLC)
       if( this._groupNames.indexOf(fileName) > -1) {
-        /*Remove group's components from TLC*/
+
         this.pLog(3,'\nResolving Group ' + fileName + ' Refernce');
         groupComponents = this[fileName]._needTree;
         /*Remove Group Refs*/
@@ -438,40 +416,39 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
             if(removeFileName == component){
               this.pLog(3,'Group: '+fileName+', removing: ' + removeFileName);
               files.splice(i2, 1);
-              //i--;
-              /*Splice in group array*/
-              //files = files;
             } 
           }        
         }
-
-        printOrder('Files: ',files,3);
+        /*this[fileName] is group object. we put it as prop of structureJS*/
+        this.printOrder('Files: ',files,3);
         resolvedGroup = this.orderImports(this[fileName]._needTree);
   
         beforeInsert = files.slice(0,(i>0)? i : 0);
-        printOrder('Before Insert: ',beforeInsert,3);
+        this.printOrder('Before Insert: ',beforeInsert,3);
         
         afterInsert = files.slice(((i+1)<files.length)?(i+1) : files.length, files.length);
-        printOrder('After Insert: ',afterInsert,3);
+        this.printOrder('After Insert: ',afterInsert,3);
 
         resultArray = beforeInsert.concat(resolvedGroup);
-        printOrder('Before Insert +  Resolved: ',resultArray,3);
+        this.printOrder('Before Insert +  Resolved: ',resultArray,3);
 
         resultArray = resultArray.concat(afterInsert);
         
-        printOrder('Final Result: ',resultArray,3);
+        this.printOrder('Final Result: ',resultArray,3);
         
         files = resultArray;
+        /*b/c we removed group name the array was shifted to the left by one
+        we decremenet i to compensate and make sure we don't miss resolving our
+        neighbor to the right*/
         --i;
       }
     }
-    
-    
-    
-    this._files = files;
-    
-    
-    printOrder('Resolved Order: ', this._files);
+    return files;
+  },
+  /**/
+  resolveDependencies : function(){
+    this._files = this.dereferenceGroups( this.orderImports(this._needTree) );
+    this.printOrder('Resolved Order: ', this._files);
     this.loadModules(this.config);
   },
   /*
@@ -496,7 +473,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     function require(depName){
       var retVal = null;
       if( _this._modules[depName] )
-      retVal = _this._modules[depName]['module'];
+        retVal = _this._modules[depName]['module'];
       return retVal;
     };
     /*aliases that let user's add semantic meaning to thier require calls*/
@@ -581,10 +558,22 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     var options = this.options;
     this.extend(config, configObj);
     this.extend(options, optionsObj);
+  },
+  /*Prototype for wrapping tlc components in class for cleaner semantics
+    and less use of Object.keys(input)[0] for getting names*/
+  tlcObj : function(name, deps){
+    var _this = {};
+    _this.name = name;
+    _this.deps = deps || [];
+    return _this;
+  },
+  _tlc : function(name, dep){
+    return new this.tlcObj(name, dep);
   }
 };
 
 (function(window){
+
   /*Sanity Check*/
   var structureTag = document.getElementById('structureJS');//returns null if not found
   if(typeof structureTag === 'undefined' || structureTag === null)
