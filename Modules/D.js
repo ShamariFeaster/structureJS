@@ -5,7 +5,7 @@ structureJS.module('D', function(require){
      document.getElementById('test').innerText = 'D is loaded';
     }, 1500);
       
-   
+   console.log(blah);
     
     return {};
 });  

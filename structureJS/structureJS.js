@@ -2,7 +2,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
   options : {
     download_minified : false,
     minified_output_tag_id : 'minified',
-    log_priority : 1
+    log_priority : 3
   },
   config : {
     structureJS_base : 'structureJS/',
@@ -20,6 +20,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     compressedMode : false,
     hasRemotes : false,
     exportFiles : '',
+    uglifyFiles : '',
   //GENERIC ENVIRNMENT
   _needTree : {},
   _files : [],
@@ -30,10 +31,11 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
   _cache : {},
   //Constants
   UGLYFY_FILENAME : 'uglifyjs.min',
-  COMPRESSION_FILENAME : 'structureJSCompress',
+  COMPRESSION_FILENAME : 'structureJSCompress_test',
   EXPORT_FILENAME : 'structureJSexport',
   REMOTE_KEYWORD : 'remote',
   REMOTE_URL : 'http://deeperhistory.info/structureJS/',
+  /*interface to store data on structureJS*/
   cache : function(key, value){
     var returnVal = null;
     if(arguments.length == 1 && this._cache[key])
@@ -50,9 +52,14 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
       target[prop] = src[prop];
     }
   },
-  pLog : function(priority, msg){
-    if(priority <= this.options.log_priority)
+
+  pLog : function(priority, msg, arrayOrObj){
+    if(priority <= this.options.log_priority){
       console.log(msg);
+      if(typeof arrayOrObj != 'undefined'){
+        console.log(arrayOrObj);
+      }
+    }
   },
   /*NOTE: arguments is not of type array hence the wierd call to splice()*/
   printf : function(/*has arguments passed in via apply()*/){
@@ -85,21 +92,6 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     }
   },
   /*Internals*/
-  printOrder : function(msg, modules, priority){
-    var priority = (typeof priority == 'undefined') ? 1 : priority;
-    function getModName(modObj){
-      var retVal = modObj;
-      if(typeof modObj === 'object')
-        retVal = Object.keys(modObj)[0];
-      return retVal;
-    }
-  
-    var output = msg || '';
-    for(var i = 0; i < modules.length; i++){
-      output += getModName( modules[i] ) + ', ';
-    }
-    this.pLog(priority,output);
-  },
   getFilename : function(input){
     var fileName = '';
     if( input && typeof input === 'object' )
@@ -108,12 +100,21 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
       fileName = input;
     return fileName;
   },
+  printOrder : function(msg, modules, priority){
+    var priority = (typeof priority == 'undefined') ? 1 : priority;
+    var output = msg || '';
+    for(var i = 0; i < modules.length; i++){
+      output += this.getFilename( modules[i] ) + ', ';
+    }
+    this.pLog(priority,output);
+  },
   resolveFilePath : function(input){
     var _this = this;
     var remoteRegex = new RegExp('^' +_this.REMOTE_KEYWORD + '\/', 'i');
     if(typeof input == 'undefined')
       return '';
     var config = this.config;
+    
     /*NOTE: inside inner functions this refers to window*/
     function resolveDirectoryAliases(input, defaultBase){
       var aliases = config.directory_aliases;
@@ -141,7 +142,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
       }
       return results;
     }
-  
+    
     var filePath = '';
     if( input && typeof input === 'object' )
       filePath = resolveDirectoryAliases(Object.keys(input)[0], config.module_base);//config.module_base + Object.keys(input)[0] + '.js';
@@ -168,14 +169,14 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     var _this = this;
     var globals = _this.config.globals || [];
     var commons = _this.config.commons || [];
-
+    var deploymentTasksRemaining = false;
     /*Wrap commons and push onto front of modules*/
     for(var i = commons.length - 1; i >= 0; i--){
       var obj = {}; obj[commons[i]] = null;
       _this._files.unshift(obj);
     }
     /*put uglifyjs at front of globals if uglify mode*/
-    if(_this.uglifyMode == true) {
+    if(_this.uglifyFiles != '') {
       globals.unshift('uglifyjs.min');
     }
     
@@ -190,21 +191,36 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     //recursive callback
     var callback = function(){
       var filePath = _this.resolveFilePath( _this._files.shift() );
+      /*Still files to load up*/
       if(filePath){
         _this.loadScript(filePath, callback);
-      }else if(_this.uglifyMode == true){
-        _this.loadScript(_this.resolveFilePath('structureJSCompress'), function(){
-          _this.pLog(1,'Modules Done Loading. Enjoy structureJS!');
-        });
-      }else if(_this.exportFiles != ''){
-        _this.loadScript(_this.resolveFilePath('structureJSexport'), function(){
-          _this.pLog(1,'Modules Done Loading. Enjoy structureJS!');
-        });
       }else{
-        _this.pLog(1,'Modules Done Loading. Enjoy structureJS!');
+        
+      /*No more files, check for deployment tasks*/  
+        if( (_this.exportFiles != '' || _this.uglifyFiles != '')
+                                     && !deploymentTasksRemaining){
+        
+          if(_this.exportFiles != '')
+            _this._files.unshift('structureJSexport');
+          if(_this.uglifyFiles != '')
+            _this._files.unshift('structureJSCompress_test');
+            
+          deploymentTasksRemaining = true;
+        }
+
+        
+        /*If there are deployment tasks keep loading if not show completion msg
+          NOTE: Not working because deploymentTasksRemaining is used to stop infinte 
+          looping and cannot be set back to false, meaning if we had deployment tasks
+          we never get to the else in this statement
+        */
+        if(deploymentTasksRemaining)
+          _this.loadScript(_this.resolveFilePath(_this._files.shift()), callback);
+        else
+          _this.pLog(1,'Bootstrap Complete. Thanks For Using structureJS.');
       }
     }
-    _this.pLog(3,_this._files);
+    _this.pLog(3,'This Files Before Loading: ',_this._files);
     _this.loadScript( this.resolveFilePath( _this._files.shift() ) , callback );
     
   },
@@ -226,7 +242,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
         modName2 = needTree[modName1][i1];
         this.pLog(2,'Dependency '+i1+' of '+modName1+' is '+ modName2);
         /*Check if declared groups are dependencies. If they aren't then I need to
-        remove them from TLC*/
+        remove them from TLC. Removal happens in orderImports()*/
         if(this._groupNames.indexOf(modName2) > -1){
           this._groupsRDeps[modName2] = 1;
         }
@@ -273,8 +289,6 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
         /*If you aren't a group you get place on TLC no matter what*/
         modules.push( modObj );
       }
-      
-      
     }
 
     /*INTERNAL FUNCTIONS
@@ -520,6 +534,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     var config = structureTag.getAttribute('data-config');
     var manifest = structureTag.getAttribute('data-manifest');
     var uglify = structureTag.getAttribute('data-uglify');
+    var uglifyFiles = structureTag.getAttribute('data-uglify-target');
     var exportFiles = structureTag.getAttribute('data-export-softgroup');
     var structreJSBase = this.config.structureJS_base;
     if(typeof manifest === 'undefined' || manifest === '' || manifest === null)
@@ -531,6 +546,11 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     if( exportFiles !== null){
       this.exportFiles = exportFiles;
     }
+    
+    if( uglifyFiles !== null){
+      this.uglifyFiles = uglifyFiles;
+    }
+    
     var _this = this;
     //recursive callback
     var callback = function(){
