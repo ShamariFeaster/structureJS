@@ -31,7 +31,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
   _cache : {},
   //Constants
   UGLYFY_FILENAME : 'uglifyjs.min',
-  COMPRESSION_FILENAME : 'structureJSCompress_test',
+  COMPRESSION_FILENAME : 'structureJSCompress',
   EXPORT_FILENAME : 'structureJSexport',
   REMOTE_KEYWORD : 'remote',
   REMOTE_URL : 'http://deeperhistory.info/structureJS/',
@@ -201,9 +201,9 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
                                      && !deploymentTasksRemaining){
         
           if(_this.exportFiles != '')
-            _this._files.unshift('structureJSexport');
+            _this._files.unshift(_this.EXPORT_FILENAME);
           if(_this.uglifyFiles != '')
-            _this._files.unshift('structureJSCompress_test');
+            _this._files.unshift(_this.COMPRESSION_FILENAME);
             
           deploymentTasksRemaining = true;
         }
