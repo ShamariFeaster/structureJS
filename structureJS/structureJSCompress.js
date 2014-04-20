@@ -11,7 +11,7 @@ structureJS.module({name: 'structureJSCompress', type : 'Utility'}, function(req
   var exportProject = false;
   var fileName = '';
   /* '.' DOES NOT match newlines, so here's the workaround */
-  var deploymentRegex = /\/\*@StartDeploymentRemove\*\/[.\S\s]*?\/\*@EndDeploymentRemove\*\//g;
+  var deploymentRegex = /\/\*@StartDeploymentRemove\*\/[\S\s]*?\/\*@EndDeploymentRemove\*\//g;
   /*Configure
     tab : spaces | \t
     newlines : \n | \r\n
