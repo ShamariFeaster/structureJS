@@ -1,6 +1,7 @@
-structureJS.declare('C',['remote/Mongo']);  
-structureJS.declare('remote/Mongo');
+structureJS.declare('C');  
+//structureJS.declare('remote/group-UI');
 structureJS.declare('main/D');
+
 
 structureJS.declareGroup({
     name : 'UI_Events', 
@@ -11,12 +12,12 @@ structureJS.declareGroup({
     name : 'DB', 
     description : 'API for client-side DB functions'
   });  
-  
+
 //populate group  
 structureJS.UI_Events.declare('MouseListener');
 structureJS.UI_Events.declare('KeyListener');
-structureJS.UI_Events.declare('DragResize', ['MouseListener']);
-
+structureJS.UI_Events.declare('DragResize', ['DB']);
+structureJS.UI_Events.declare('DB');
 
 structureJS.DB.declare('IdbClient');
 structureJS.DB.declare('Mongo');

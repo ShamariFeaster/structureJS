@@ -52,6 +52,10 @@ structureJS.module({name: 'structureJSCompress', type : 'Utility'}, function(req
     xhr.send();
   }
   /*Put structureJS bootstrap on the fron*/
-  combineSrcFiles( structureJS.config.structureJS_base + '/structureJS.js' );
+  if(structureJS.hasRemotes == false)
+    combineSrcFiles( structureJS.config.structureJS_base + '/structureJS.js' );
+  else{
+    throw 'Error: Cannot minify because you are using remote files in the project'; 
+  }
   return {};
 });

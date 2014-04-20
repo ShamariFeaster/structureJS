@@ -18,6 +18,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     },
     uglifyMode : false,
     compressedMode : false,
+    hasRemotes : false,
     exportFiles : '',
   //GENERIC ENVIRNMENT
   _needTree : {},
@@ -25,6 +26,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
   _exportOrder : [],
   _modules : {},
   _groupNames: [],
+  _groupsRDeps : {},
   _cache : {},
   //Constants
   UGLYFY_FILENAME : 'uglifyjs.min',
@@ -101,9 +103,10 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
       var aliases = config.directory_aliases;
       var results = '';
       /*Before returning replace 'remote' with remote URL*/
-      if(new RegExp(remoteRegex).test(input))
+      if(new RegExp(remoteRegex).test(input)){
         results = input.replace(remoteRegex, _this.REMOTE_URL) + '.js';
-      else
+        _this.hasRemotes = true;
+      }else
         results = defaultBase + input + '.js';
         
       var matchResult = null;  
@@ -206,7 +209,11 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
       for(var i1 = 0;i1 < needTree[modName1].length; i1++){//go through it's depenedencies
         modName2 = needTree[modName1][i1];
         this.pLog(2,'Dependency '+i1+' of '+modName1+' is '+ modName2);
-
+        /*Check if declared groups are dependencies. If they aren't then I need to
+        remove them from TLC*/
+        if(this._groupNames.indexOf(modName2) > -1){
+          this._groupsRDeps[modName2] = 1;
+        }
         if(typeof needTree[modName2] !== 'undefined'){//my dependency list
           for(var i2 = 0;i2 < needTree[modName2].length; i2++){//make sure module isn't a dependency of its own dependency
             modName3 = needTree[modName2][i2];
@@ -222,18 +229,37 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
       }
       
     }
+ 
     return false;
   },
   
   orderImports : function(needTree){
     this.detectCircularDependency(needTree);
     var _this = this;
+    var groupsRDeps = this._groupsRDeps;
     var modules = [];
+
+    
     //convert needTree to array for easier processing
-    for(var i in needTree){
+
+    for(var fileName in needTree){
       var modObj = {};
-      modObj[i] = needTree[i];
-      modules.push( modObj );
+      modObj[fileName] = needTree[fileName];
+      /*If you are a group, you have to be listed as a declared
+      dependencies to remain in TLC*/
+      
+      if(this._groupNames.indexOf(fileName) > -1){
+        for(var groupName in groupsRDeps){
+          console.log('comparing ' + fileName + ' to ' + groupName);
+          if(fileName == groupName)
+            modules.push( modObj );
+        }
+      }else{
+        /*If you aren't a group you get place on TLC no matter what*/
+        modules.push( modObj );
+      }
+      
+      
     }
 
     /*INTERNAL FUNCTIONS
@@ -353,17 +379,17 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     /*uses declare to put dependeny tree together on <group name>._needTree
     we would resolve this separately to construct hard group*/
       _this.declare.apply(groupNamespace, [name, dependencies]);
-      /*add to regular _needtree to resolve in top-level chain. After that
-      we go through resolved chain and then splice in the resolve group names
-      into the top-level chain*/
+      /*I don't want to add to TLC because unless user puts group in TLC*/
       
-      _this.declare(name, dependencies);
+      //_this.declare(name, dependencies);
     };
   },
 
   resolveDependencies : function(){
     var _this = this;
-    function printOrder(msg, modules){
+    var groupNames = this._groupNames;
+    function printOrder(msg, modules, priority){
+      var priority = (typeof priority == 'undefined') ? 1 : priority;
       function getModName(modObj){
         var retVal = modObj;
         if(typeof modObj === 'object')
@@ -375,11 +401,11 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
       for(var i = 0; i < modules.length; i++){
         output += getModName( modules[i] ) + ', ';
       }
-      _this.pLog(2,output);
+      _this.pLog(priority,output);
     }
-  
+    
     this._files = this.orderImports(this._needTree);   
-    /*Turn to string for faster existence testing*/
+   
     var files = this._files;
     var filesCopy = files.slice(0, files.length);
     var match = null;
@@ -391,9 +417,10 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     var joinedResolvedGroup = '';
     var groupComponents = null;
     var removedComponents = 0;
+   
+    
     /*Resolve group chains and splice results into top 
     level chain*/
-
     for(var i = 0; i < files.length; i++){
       fileName = this.getFilename(files[i]);
       
@@ -414,33 +441,32 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
               //i--;
               /*Splice in group array*/
               //files = files;
-            }
-            
-          }
-          
-
+            } 
+          }        
         }
 
-        printOrder('Files: ',files);
+        printOrder('Files: ',files,3);
         resolvedGroup = this.orderImports(this[fileName]._needTree);
   
         beforeInsert = files.slice(0,(i>0)? i : 0);
-        printOrder('Before Insert: ',beforeInsert);
+        printOrder('Before Insert: ',beforeInsert,3);
         
         afterInsert = files.slice(((i+1)<files.length)?(i+1) : files.length, files.length);
-        printOrder('After Insert: ',afterInsert);
+        printOrder('After Insert: ',afterInsert,3);
 
         resultArray = beforeInsert.concat(resolvedGroup);
-        printOrder('Before Insert +  Resolved: ',resultArray);
+        printOrder('Before Insert +  Resolved: ',resultArray,3);
 
         resultArray = resultArray.concat(afterInsert);
         
-        printOrder('Final Result: ',resultArray);
+        printOrder('Final Result: ',resultArray,3);
         
         files = resultArray;
-
+        --i;
       }
     }
+    
+    
     
     this._files = files;
     
