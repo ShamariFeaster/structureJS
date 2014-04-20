@@ -4,9 +4,11 @@ structureJS.module({name: 'structureJSCompress', type : 'Utility'}, function(req
   var moduleBase = structureJS.config.module_base;
   var globalBase = structureJS.config.global_base;
   var exports = structureJS.uglifyFiles.split(',');
+  var wholeProject = structureJS._exportOrder;
   var indexes = {};
   var exportList = {};
   var thisGroup = null;
+  var exportProject = false;
   /*Configure
     tab : spaces | \t
     newlines : \n | \r\n
@@ -36,6 +38,14 @@ structureJS.module({name: 'structureJSCompress', type : 'Utility'}, function(req
     
   }
   
+  for(var i = 0; i < exports.length; i++){
+    if(exports[i] == '*'){
+      exportProject = true;
+      exports = wholeProject;
+      exports.shift();//take uglify off the front
+    }
+  }
+  
   function processFileOutput(input){
     return input.replace(/\n/g,'<br>').replace(/  /g,'&nbsp&nbsp&nbsp&nbsp');
   }
@@ -58,6 +68,14 @@ structureJS.module({name: 'structureJSCompress', type : 'Utility'}, function(req
         //console.log(this);
         //look at the scope of the xhr request for more info
         exportList[listName].output += compress(this.responseText);
+        /*Output to console*/
+        console.log('----- ' + listName + '----- ');
+        console.log(exportList[listName].output);
+        
+        /*output to DOM*/
+        var outputTag = document.getElementById(structureJS.options.minified_output_tag_id);
+        if(outputTag)
+          outputTag.innerText += '----- ' + listName + '-----\n\n' + exportList[listName].output + '\n\n';
         indexes[listName];
       }
       /*note the postfix incrementation. I am able to detect completion, yet not
@@ -86,11 +104,57 @@ structureJS.module({name: 'structureJSCompress', type : 'Utility'}, function(req
     }
     
   }
-  console.log(exportList)
-  /*In a way I am kindof spawning and tagging x threads with a group name*/
-  for(var name in exportList){
-    combineSrcFiles( name );
+  
+  /*Project Exportation*/
+  function combineProjectSrcFiles(fileName){
+    function callback(){
+      combinedSrc += compress(this.responseText);
+      var nextFile = exports.shift();
+      //console.log('Next: ' + nextFile);
+      if(nextFile)
+        getProjectSrc( nextFile, callback);
+      else{
+        
+        /*Output to console*/
+        console.log(1, combinedSrc);
+        
+        /*output to DOM*/
+        var outputTag = document.getElementById(structureJS.options.minified_output_tag_id);
+        if(outputTag)
+          outputTag.innerText = combinedSrc;
+        
+        /*Download compressed file*/
+        if(structureJS.options.download_minified == true)
+          location.href = "data:application/octet-stream," + encodeURIComponent(combinedSrc);        
+        
+        //window.open('http://localhost/structureJS/structureJS/export.html?exports=' + combinedSrc);    
+      }
+    }
+    if(fileName)
+      getProjectSrc(fileName, callback);
   }
+  
+  function getProjectSrc(fileName, callback){
+    //console.log('Getting: ' + fileName);
+    var xhr = new XMLHttpRequest();
+    xhr.onload = callback;
+    xhr.open('get',  fileName, true);
+    xhr.send();
+  }
+  
+  /*Driver*/
+  if(exportProject == true){
+    if(structureJS.hasRemotes == false)
+      combineProjectSrcFiles( structureJS.config.structureJS_base + '/structureJS.js' );
+    else{
+      throw 'Error: Cannot minify because you are using remote files in the project'; 
+    }
+  }else{
+    for(var name in exportList){
+      combineSrcFiles( name );
+    }
+  }
+  
   
   
   return {};

@@ -134,7 +134,7 @@ structureJS.group(
       Use html interface to let use configure softgroup export
           localhost/structureJs/export?sg=1&uglify=0&list=' + list;
       
-      Opening results of mulitple exports/minification
+      Opening results of mulitple exports
       structreJSCompress.js uses this to both minified and converted soft groups  
         window.open('localhost/structureJs/open_export?contents=' + exportContent);
         -->
@@ -158,7 +158,6 @@ structureJS.group(
   <script id="structureJS" 
         data-manifest="manifest"
         data-config="config"
-        data-uglify="true"
         data-uglify-target="*"
         src="../lib/structureJS/structureJS.js"/>
   </script>
@@ -166,10 +165,12 @@ structureJS.group(
   <script id="structureJS" 
         data-manifest="manifest"
         data-config="config"
-        data-uglify="true"
         data-uglify-target="file1,file2,file3"
         src="../lib/structureJS/structureJS.js"/>
   </script>
   
   <!-- -->
+  
+
+  
   </html>
