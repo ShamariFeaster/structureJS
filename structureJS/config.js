@@ -5,7 +5,7 @@ structureJS.configure(
   global_base : 'lib/',
   directory_aliases : {main : 'drivers/'},
   commons : [], 
-  globals : ['jquery']
+  globals : []
 },{
   download_minified : false,
   minified_output_tag_id : 'mixy'

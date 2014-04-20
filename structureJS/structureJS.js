@@ -21,6 +21,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     hasRemotes : false,
     exportFiles : '',
     uglifyFiles : '',
+    /*@InsertAfterRemotes*/
   //GENERIC ENVIRNMENT
   _needTree : {},
   _files : [],
@@ -113,6 +114,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
   resolveFilePath : function(input){
     var _this = this;
     var remoteRegex = new RegExp('^' +_this.REMOTE_KEYWORD + '\/', 'i');
+    var cdnRegex = /^(http|\/\/)/;
     if(typeof input == 'undefined')
       return '';
     var config = this.config;
@@ -121,12 +123,17 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     function resolveDirectoryAliases(input, defaultBase){
       var aliases = config.directory_aliases;
       var results = '';
+      console.log(input + ' is CDN: ' +cdnRegex.test(input));
       /*Before returning replace 'remote' with remote URL*/
       if(new RegExp(remoteRegex).test(input)){
         results = input.replace(remoteRegex, _this.REMOTE_URL) + '.js';
         _this.hasRemotes = true;
-      }else
+      }else if(cdnRegex.test(input)){
+        results = input + '.js';
+        _this.hasRemotes = true;
+      }else{
         results = defaultBase + input + '.js';
+      }
         
       var matchResult = null;  
       var regex = null;
