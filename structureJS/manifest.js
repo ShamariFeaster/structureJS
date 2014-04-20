@@ -1,6 +1,7 @@
 structureJS.declare('C', ['UI_Events','DB']);  
+structureJS.declare('D', ['DB','C']);
 //structureJS.declare('remote/group-UI');
-structureJS.declare('main/D', ['DB']);
+//structureJS.declare('D-jquery-dep', ['DB','C']);
 
 
 structureJS.declareGroup({

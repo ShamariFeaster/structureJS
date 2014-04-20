@@ -543,8 +543,20 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     var _this = this;
     var infoObj = null;
     var moduleWrapper = {type : 'unknown'};
-    
+    var globDeps = null;
     infoObj = this.decodeInfoObj(modConfig);
+    /*Check if declared global deps is in global namespace*/
+    if(typeof infoObj.global_dependencies != 'undefined'){
+      globDeps = infoObj.global_dependencies;
+      if(!Array.isArray(globDeps)){
+        throw 'ERROR: global_dependencies Property Of ' + infoObj.name + '\s Configuration Object Must Be An Array.'
+      }
+      
+      for(var i = 0; i < globDeps.length; i++){
+        if(typeof window[globDeps[i]] == 'undefined')
+          throw 'ERROR: ' + infoObj.name + ' Requires ' + globDeps[i] + ' To Be In Global Namespace.';
+      }
+    }
     function require(depName){
       var retVal = null;
       if( _this._modules[depName] )
