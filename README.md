@@ -54,31 +54,66 @@ You need one  `script` tag and a couple of `data`  attributes in that tag to boo
 ```
 `id` - (required) must be "structureJS"
 
-`src` - (required) This points to the structureJS `structureJS.js` bootstrap file.
+`src` - (required) This points to the structureJS `structureJS.js` bootstrap file.**path relative to the HTML file containing this script tag**
 
-`data-manifest` - (required) This is where you declare the files your app will use and each file's dependencies. **Must be in the directory specified in `config.structureJS_base`.**
+`data-manifest` - (required) This is where you declare the files your app will use and each file's dependencies. **path relative to the structureJS.js script NOT the HTML file containing this script tag**
 
-`data-config` - (optional) If you wish to use your own directory structure, modules available to all other modules (utilities for example), or gloabl scripts (jQuery for example) you use a config file and declare its name here. It doesn't have to be "config", it can be called whatever you want. **Must be in the directory specified in `config.structureJS_base`.**
+`data-config` - (optional) If you wish to use your own directory structure, modules available to all other modules (utilities for example), or gloabl scripts (jQuery for example) you use a config file and declare its name here. It doesn't have to be "config", it can be called whatever you want. **path relative to the structureJS.js script NOT the HTML file containing this script tag**
 
 `data-uglify-target` - (optional) This attribute tells structureJS to combine and/or minify a single file, a groups of files, or your entire app using UglifyJS right in your browser. The results can be downloaded, output to the console, opened in new windows - whatever you choose.
 
 
 The typical directory structure looks like:
 ```
-
+|-structureJS-master-copy(use one copy for all your projects)
+|-|-structureJS.js (structureJS bootstrap file.) (Required)
+|-|-structureJSCompress.js (Required to minify your app) (optional)
+|-|-uglifyjs.min.js (Required to minify your app) (optional)
+|
 |-myAppDirectory (dir)(You can call this whatever you want)
 |--|myapp.html (declaring the manifest and config files)
 |
-|-structureJS (dir)(You can call this whatever you want)
-|--|-structureJS.js (structureJS bootstrap file.) (Required)
-|--|-manifest.js (Read further to learn what this is) (Required)
-|--|-config.js (Read further to learn what this is) (Optional)
-|--|-structureJSCompress.js (Required to minify your app) (optional)
-|--|-uglifyjs.min.js (Required to minify your app) (optional) 
+|--|-structureJS (dir) (you could name this whatever you want)
+|---|-manifest.js (Read further to learn what this is) (Required)
+|---|-config.js (Read further to learn what this is) (Optional)
 |
 |-ModulesDirectory (dir) (You can call this whatever you want)
 |--|-file1.js (This is where you define your modules)
 ```
+***How To Configure Using A Master Copy For All Projects***
+
+With structureJS you don't have to copy the app code into every project you use it in. Put it in a directory above your projects. The only structureJS specific files you need in each project is a config and manifest file.
+
+You could even create folder above all your projects that holds config and manifest files for each project. This way there is NO structureJS bloat in each project.
+
+What I mean by **master copy** is a single copy of `structureJS.js` somewhere on your server. Make sure all the other required files (structureJSCompress & uglifyjs.min.js) are in the same directory as your master copy.
+
+1. Point `data-config` and `data-manifest` attributes to each files location within a given project **RELATIVE TO THE MASTER COPY**
+
+2. In your project's `config.js` file, set `config.structureJS_base` property to directory containing the master copy **RELATIVE TO THE config.js LOCATION** 
+
+So given the directory structure above, your script tag in `myapp.html` would look like this: 
+
+```html
+<script id="structureJS"
+    data-manifest="../myAppDirectory/structureJS/manifest"
+    data-config="../myAppDirectory/structureJS/config"
+    data-uglify-target="*"
+    src="../structureJS-master-copy/structureJS.js"/>
+```
+
+And `config.js` in `myAppDirectory/structureJS` would look like this:
+
+```javascript
+structureJS.configure(
+{
+  structureJS_base : '../../structureJS-master-copy/',
+  module_base : 'Modules/', 
+  global_base : 'lib/',
+  //...More Config stuff
+```
+
+This is certainly not the most user friendly configuration setup but, personally, I think the benefits of having only a single copy of structureJS for all your projects make it worth the time. 
 
 ### Importing Files ###
 
