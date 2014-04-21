@@ -3,7 +3,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
   options : {
     download_minified : false,
     minified_output_tag_id : 'minified',
-    log_priority : 0
+    log_priority : 3
   },
   
   /*@StartDeploymentRemove*/
