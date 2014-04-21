@@ -477,8 +477,8 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     //recursive callback
     var callback = function(){
       if(manifest != null){
-        _this.pLog(1,'Loading Manifest: ' + structreJSBase + manifest );
-        _this.loadScript(structreJSBase + manifest + '.js', callback);
+        _this.pLog(1,'Loading Manifest: ' + manifest );
+        _this.loadScript(manifest + '.js', callback);
         manifest = null;
       }else{
         _this.pLog(1,'Done Loading Manifest And/Or Config Files.');
@@ -486,10 +486,10 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
       }
     }
     if(config){
-      this.pLog(1,'Loading Config: ' + structreJSBase + config );
-      this.loadScript( structreJSBase + config + '.js', callback );
+      this.pLog(1,'Loading Config: ' + config );
+      this.loadScript( config + '.js', callback );
     }else{
-      this.loadScript( structreJSBase + manifest + '.js', function(){
+      this.loadScript(  manifest + '.js', function(){
         onLoaded.call(_this);
       } );
     }
