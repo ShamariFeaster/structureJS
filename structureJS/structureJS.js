@@ -1,9 +1,12 @@
 var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
+
   options : {
     download_minified : false,
     minified_output_tag_id : 'minified',
-    log_priority : 3
+    log_priority : 0
   },
+  
+  /*@StartDeploymentRemove*/
   config : {
     structureJS_base : 'structureJS/',
     module_base : 'Modules/',
@@ -26,10 +29,8 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
   _needTree : {},
   _files : [],
   _exportOrder : [],
-  _modules : {},
   _groupNames: [],
   _groupsRDeps : {},
-  _cache : {},
   //Constants
   NAME : 'structureJS',
   UGLYFY_FILENAME : 'uglifyjs.min',
@@ -37,6 +38,11 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
   EXPORT_FILENAME : 'structureJSexport',
   REMOTE_KEYWORD : 'remote',
   REMOTE_URL : 'http://deeperhistory.info/structureJS/',
+  /*@EndDeploymentRemove*/
+  
+  
+  _modules : {},
+  _cache : {},
   /*interface to store data on structureJS*/
   cache : function(key, value){
     var returnVal = null;
@@ -93,6 +99,9 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
       console.log(_this.printf.apply(null, Array.prototype.slice.call(arguments, 1)));
     }
   },
+  
+  
+  
   /*@StartDeploymentRemove*/
   /*Internals*/
   getFilename : function(input){
@@ -497,6 +506,9 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     return new this.tlcObj(name, dep);
   },
   /*@EndDeploymentRemove*/
+  
+  
+  
   decodeInfoObj : function(infoObj){
     var results = {name : ''};
     if(typeof infoObj === 'string')
@@ -509,6 +521,11 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     }
     return results;
   },
+  
+  
+  
+  
+  /*@StartDeploymentRemove*/
   declare : function(name, dependencies){
     /*Add error checking here for name*/
     if(typeof dependencies == 'undefined')
@@ -533,6 +550,10 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
       //_this.declare(name, dependencies);
     };
   },
+  /*@EndDeploymentRemove*/
+  
+  
+  
   /*
     the idea behind the 'amd' and '_call' aliases of require function
     is that it allows user to put semantic meaning into their requires.
@@ -572,9 +593,15 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     };
     /*aliases that let user's add semantic meaning to thier require calls*/
     require.amd = require;
+    require.getType = function(modName){
+      var retVal = null;
+      if( _this._modules[depName] )
+        retVal = _this._modules[depName]['type'];
+      return retVal;
+    }
     require._class = require;
     structureJS.require = require;
-
+    
 
     /*Put the return val of the module function into modules object
     so they can be retrieved later using 'require'*/
@@ -594,7 +621,11 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
       throw 'Module Function Definition Must Return Something';
     this.pLog(2,'AMD: Loading ' + modName);
     this._modules[modName] = moduleWrapper;
-  },
+  }
+  
+  
+  
+  /*@StartDeploymentRemove*/,
   /*This is for hard groups*/
   group : function(groupConfig, /*function*/ groupModule){
     if(typeof groupConfig == 'undefined' || typeof groupConfig === 'function')
@@ -605,13 +636,14 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     executeModule.call(null, this.decodeInfoObj(groupConfig) ); 
 
   },
-
+  
   configure : function(configObj, optionsObj){
     var config = this.config;
     var options = this.options;
     this.extend(config, configObj);
     this.extend(options, optionsObj);
   }
+  /*@EndDeploymentRemove*/
 };
 
 (function(window){
