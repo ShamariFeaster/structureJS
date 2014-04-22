@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script>
+
+/*the doExport() function that is trigger onclick here is passed to the master script
+notice I make sure doExport will execute in context of this document by attaching it to
+'this'. I take advantage of the fact that until I execute doExport the reference to structureJS 
+is not resolved. This avoids refernce errors because I could not guarantee structureJS would
+be loaded on time. There is obviously a better way to do this like maybe writing a mini script loaded
+here that would execute master script then the logic contained here (in a file) next. Truthfully,
+is works so I'm just going to leave it for now*/
+var doExport = null;
+
+window.sjsOnComplete = {};
+window.sjsOnComplete.context = this;
+window.sjsOnComplete.called = false;
+window.sjsOnComplete.func = function(){
+
+  var _this = window.sjsOnComplete.context;
+  _this.doExport = function(){
+    var exportData = {};
+    exportData.files =  document.getElementById('target').value || '';
+    exportData.base_dir =  document.getElementById('project_location').value || './';
+    exportData.manifest_loc =  document.getElementById('project_manifest_location').value || './';
+    exportData.manifest_name =  document.getElementById('project_manifest_name').value || 'manifest';
+    
+    structureJS.initiateExport(exportData);
+  }
+  
+};
+
+
+</script>
+<script id="structureJS" 
+        data-config="export-config"
+        src="structureJS.js"/>
+</script>
+
+</head>
+<body>
+  <label for="project_location">Project Base Dir (Relative To This File): </label><input id="project_location" type="text"></input><br>
+  <label for="project_manifest_name">Project Maniefest Name: </label><input id="project_manifest_name" type="text"></input> *Leave Blank If It's Named 'maifest'<br>
+  <label for="project_manifest_location">Project Maniefest Location (Relative To Project Base Dir): </label><input id="project_manifest_location" type="text"></input><br>
+  <label for="target">Target: </label><input id="target" type="text"></input><button onclick="doExport()" id="export">Export</button>
+</body>
+
+</html>

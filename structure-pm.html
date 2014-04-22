@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script>
+
+
+var doExport = null;
+
+window.sjsOnComplete = {};
+window.sjsOnComplete.context = this;
+window.sjsOnComplete.called = false;
+window.sjsOnComplete.func = function(){
+
+  var _this = window.sjsOnComplete.context;
+  _this.doExport = function(){
+    var exportFiles = document.getElementById('target').value;
+    structureJS.initiateExport(exportFiles);
+  }
+  
+};
+
+
+</script>
+<script id="structureJS" 
+        data-manifest="manifest"
+        data-config="config"
+        src="structureJS/structureJS.js"/>
+</script>
+<script>
+
+</script>
+</head>
+<body>
+  <label for="target">Target</label><input id="target" type="text"></input><button onclick="doExport()" id="export">Export</button>
+</body>
+
+</html>

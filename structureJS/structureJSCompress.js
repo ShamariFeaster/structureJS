@@ -2,8 +2,9 @@ structureJS.module({name: 'structureJSCompress', type : 'Utility'}, function(req
   //console.log(structureJS._exportOrder);
   var combinedSrc = '';
   var moduleBase = structureJS.config.module_base;
+  var projectBase = structureJS.config.project_base;
   var globalBase = structureJS.config.global_base;
-  var exports = structureJS.uglifyFiles.split(',');
+  var exports = null;
   var wholeProject = structureJS._exportOrder;
   var indexes = {};
   var exportList = {};
@@ -27,49 +28,55 @@ structureJS.module({name: 'structureJSCompress', type : 'Utility'}, function(req
     compressed_ast.mangle_names();
     return compressed_ast.print_to_string();
   }
-  var files = [];
-  var compressFlg = true;
-  /*indexes are counters indexed on group name*/
-  for(var i = 0; i < exports.length; i++){
-    /*fileName could be soft group name*/
-    
-    compressFlg = true;
-    if(/\-u$/.test(exports[i]) == true){
-        exports[i] = exports[i].replace(/\-u$/,'');
-        compressFlg = false;
-      }
-    fileName = exports[i].trim();
-    indexes[fileName] = 0;
-    thisGroup = structureJS[fileName];
-    files = [];
-    if(typeof thisGroup == 'undefined'){
+  
+  function parseFileList(){
+    exports = structureJS.uglifyFiles.split(',');
+    wholeProject = structureJS._exportOrder;
+    var files = [];
+    var compressFlg = true;
+    /*indexes are counters indexed on group name*/
+    for(var i = 0; i < exports.length; i++){
+      /*fileName could be soft group name*/
+      compressFlg = true;
+      if(/\-u$/.test(exports[i]) == true){
+          exports[i] = exports[i].replace(/\-u$/,'');
+          compressFlg = false;
+        }
+      fileName = exports[i].trim();
+      indexes[fileName] = 0;
+      thisGroup = structureJS[fileName];
+      files = [];
       
+      if(typeof thisGroup == 'undefined'){
+        files.push( projectBase + fileName + '.js');
+        var exportObj = {name : fileName, files : files, output : '', compress : compressFlg};
+        exportList[exportObj.name] = exportObj;
+      }else{
       
-      files.push( fileName + '.js');
-      var exportObj = {name : fileName, files : files, output : '', compress : compressFlg};
-      exportList[exportObj.name] = exportObj;
-    }else{
-    
-      for(var file in thisGroup._needTree){
-        files.push(moduleBase + file + '.js');
-      }
-      var exportObj = {name : fileName, files : files, output : '', compress : compressFlg};
-      exportList[fileName] = exportObj;
+        for(var file in thisGroup._needTree){
+          files.push(projectBase + moduleBase + file + '.js');
+        }
+        var exportObj = {name : fileName, files : files, output : '', compress : compressFlg};
+        exportList[fileName] = exportObj;
 
+      }
+      
+      
     }
     
-    
+    for(var i = 0; i < exports.length; i++){
+
+      if(exports[i].trim() == '*'){
+        exportProject = true;
+        /*copy it because we consume it below and cannot be reused in subsequent 
+        exports*/
+        exports = wholeProject.slice(0);
+        break;
+      }
+    }
+    console.log(exports);
   }
   
-  for(var i = 0; i < exports.length; i++){
-
-    if(exports[i].trim() == '*'){
-      exportProject = true;
-      exports = wholeProject;
-      exports.shift();//take uglify off the front
-      break;
-    }
-  }
   
   function processFileOutput(input){
     return input.replace(/\n/g,'<br>').replace(/  /g,'&nbsp&nbsp&nbsp&nbsp');
@@ -117,6 +124,12 @@ structureJS.module({name: 'structureJSCompress', type : 'Utility'}, function(req
         
         /*Should make this configurable b/c people hate popups*/
         window.open('http://localhost/structureJS/structureJS/export.html?exports=' + processFileOutput( exportList[listName].output) );
+        
+        /*Reset variables*/
+        /*For subsequent exports in the same session we need to clear our objects
+        because they remain in memory*/
+        delete indexes[listName];
+        delete exportList[listName];
       }
 
     }
@@ -167,6 +180,14 @@ structureJS.module({name: 'structureJSCompress', type : 'Utility'}, function(req
         if(structureJS.options.download_minified == true)
           location.href = "data:application/octet-stream," + encodeURIComponent(combinedSrc);        
         
+        //reset variables  
+        /*For subsequent exports in the same session we need to clear our objects
+        because they remain in memory*/
+        combinedSrc = '';
+        exportProject = false;
+        exportList = {}; // b/c '*' gets put in here & needs to be cleared
+        /*note we don't clear exports because it is a copy of wholeProject which
+        never */
         //window.open('http://localhost/structureJS/structureJS/export.html?exports=' + combinedSrc);    
       }
     }
@@ -184,20 +205,23 @@ structureJS.module({name: 'structureJSCompress', type : 'Utility'}, function(req
     xhr.send();
   }
   
-  /*Driver*/
-  if(exportProject == true){
-    if(structureJS.hasRemotes == false)
-      combineProjectSrcFiles( structureJS.config.structureJS_base +structureJS.NAME+'.js' );
-    else{
-      throw 'Error: Cannot minify because you are using remote files in the project'; 
+  
+  var executeExport = function(){
+    parseFileList();
+    /*Driver*/
+    if(exportProject == true){
+      if(structureJS.hasRemotes == false)
+        combineProjectSrcFiles( structureJS.config.structureJS_base +structureJS.NAME+'.js' );
+      else{
+        throw 'Error: Cannot minify because you are using remote files in the project'; 
+      }
+    }else{
+      for(var name in exportList){
+        combineSrcFiles( name );
+      }
     }
-  }else{
-    for(var name in exportList){
-      combineSrcFiles( name );
-    }
-  }
-  
-  
-  
-  return {};
+  };
+  executeExport();
+
+  return { executeExport : executeExport};
 });

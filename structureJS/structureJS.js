@@ -3,12 +3,21 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
   options : {
     download_minified : false,
     minified_output_tag_id : 'minified',
-    log_priority : 3
+    log_priority : 1
   },
   
   /*@StartDeploymentRemove*/
   config : {
+    /*project_base is new and used for export script. It is put in front of all paths
+    except structureJS lib scripts (minify, export). b/c they are assumed to be in the
+    same dir as this master file and the default './' is implicit.
+    
+    Note that in the export-config.js file that the structureJS_base prop is set to './'
+    b/c unless the user want it not to be the export script's default dir will be same as this
+    master file    
+    */
     structureJS_base : 'structureJS/',
+    project_base : './',
     module_base : 'Modules/',
     global_base : 'lib/',
     globals : [],//things like jQuery ie, we are ok with the script polluting global ns
@@ -24,6 +33,8 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     hasRemotes : false,
     exportFiles : '',
     uglifyFiles : '',
+    exportInitiated : false,
+    executeExport : null,
     /*@InsertAfterRemotes*/
   //GENERIC ENVIRNMENT
   _needTree : {},
@@ -36,6 +47,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
   UGLYFY_FILENAME : 'uglifyjs.min',
   COMPRESSION_FILENAME : 'structureJSCompress',
   EXPORT_FILENAME : 'structureJSexport',
+  EXPORT_CONFIG_FILENAME : 'export-config',
   REMOTE_KEYWORD : 'remote',
   REMOTE_URL : 'http://deeperhistory.info/structureJS/',
   /*@EndDeploymentRemove*/
@@ -160,16 +172,17 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
       }
       return results;
     }
+    /*End resolve*/
     
     var filePath = '';
     if( input && typeof input === 'object' )
-      filePath = resolveDirectoryAliases(Object.keys(input)[0], config.module_base);//config.module_base + Object.keys(input)[0] + '.js';
+      filePath = resolveDirectoryAliases(Object.keys(input)[0], config.project_base + config.module_base);//config.module_base + Object.keys(input)[0] + '.js';
     else if(input == this.UGLYFY_FILENAME || input == this.COMPRESSION_FILENAME
                                           || input == this.EXPORT_FILENAME)
       filePath = resolveDirectoryAliases(input, config.structureJS_base);//config.structureJS_base + input + '.js';
     else if(typeof input === 'string')
-      filePath = resolveDirectoryAliases(input, config.global_base)//config.global_base + input + '.js';
-    
+      filePath = resolveDirectoryAliases(input, config.project_base + config.global_base)//config.global_base + input + '.js';
+
     return filePath;
   },
   loadScript : function(url, callback){
@@ -178,7 +191,6 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
       var script = document.createElement('script');
       script.type = 'text/javascript';
       script.src = url;
-      
       head.appendChild(script);
       script.onload = callback;
     },
@@ -205,7 +217,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     for(var i = 0; i < _this._files.length; i++){
       _this._exportOrder.push(_this.resolveFilePath( _this._files[i] ));
     }
-    
+    console.log(_this._exportOrder);
     //recursive callback
     var callback = function(){
       var filePath = _this.resolveFilePath( _this._files.shift() );
@@ -447,6 +459,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     this.printOrder('Resolved Order: ', this._files);
     this.loadModules(this.config);
   },
+  /*This is used in development mode use*/
   loadConfigAndManifest : function(onLoaded){
   
     var structureTag = document.getElementById('structureJS');//returns null if not found
@@ -494,6 +507,20 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
       } );
     }
   },
+  
+  /*Should put onto export object to this clean up. NOTE: this loads the 
+  project manager interface (pmi) pm script's config*/
+  loadConfig : function(callback){
+    var structureTag = document.getElementById('structureJS');
+    this.loadScript( structureTag.getAttribute('data-config') + '.js', callback);
+  },
+  
+  /*This loads the project targeted for export's manifest*/
+  loadExportManifest : function(callback){
+    var config = structureJS.config;
+    this.loadScript( config.manifest_loc + config.manifest_name + '.js', callback);
+  },
+  
   /*Prototype for wrapping tlc components in class for cleaner semantics
     and less use of Object.keys(input)[0] for getting names*/
   tlcObj : function(name, deps){
@@ -504,6 +531,51 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
   },
   _tlc : function(name, dep){
     return new this.tlcObj(name, dep);
+  },
+  /*This loads up drivers for exportation. it takes state 
+  
+  TODO: instead of taking a state I should break the gloabal/common ordering 
+        and driver loadind into 2 functions*/
+  exportLoad : function(isFirstTime){
+    var _this = this;
+    var globals = _this.config.globals || [];
+    var commons = _this.config.commons || [];
+    _this._exportOrder = [];
+    /*Wrap commons and push onto front of modules*/
+    for(var i = commons.length - 1; i >= 0; i--){
+      var obj = {}; obj[commons[i]] = null;
+      _this._files.unshift(obj);
+    }
+    
+    /*Put globals at the front of the line.
+    Have to deep copy export order because we consume
+    it here. Shallow leaves us with empty exports*/
+    _this._files = globals.concat(_this._files);
+    for(var i = 0; i < _this._files.length; i++){
+      _this._exportOrder.push(_this.resolveFilePath( _this._files[i] ));
+    }
+    
+    /*put uglifyjs at front of globals if uglify mode*/
+    if(isFirstTime) {
+      _this.loadScript( _this.resolveFilePath( 'uglifyjs.min' ),
+        function(){
+          _this.loadScript(_this.resolveFilePath(_this.COMPRESSION_FILENAME),
+            function(){
+              console.log('Finished Export Load. Clearing _files');
+              _this._files = [];
+            })
+        });
+    }
+    
+    console.log(_this._exportOrder); 
+    
+  },
+  /*For export we need to order imports, dereference group names, insert common/globals
+    then (if necessary) load drivers  */
+  exportResolveDependencies : function(isFirstTime){
+    this._files = this.dereferenceGroups( this.orderImports(this._needTree) );
+    this.exportLoad(isFirstTime)
+    this.printOrder('Resolved Order: ', this._files);
   },
   /*@EndDeploymentRemove*/
   
@@ -667,7 +739,83 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
   /*Sanity Check*/
   var structureTag = document.getElementById('structureJS');//returns null if not found
   if(typeof structureTag === 'undefined' || structureTag === null)
-    throw 'ERROR: No script tag with ID of "structureJS" which is required';
-  structureJS.loadConfigAndManifest(structureJS.resolveDependencies);
+    throw 'ERROR: No script tag with ID of "structureJS" which is required';  
+
+  if(typeof window.sjsOnComplete != 'undefined' ){
+    /*By calling this we bind executeExport to a button in the project manager interface(pmi)*/
+    window.sjsOnComplete.func.call(null);
+
+    structureJS.initiateExport  = function(exportDataObj){
+      /*Get the data from the pmi*/
+      structureJS.uglifyFiles = exportDataObj.files;
+      structureJS.config.project_base = exportDataObj.base_dir;
+      structureJS.config.manifest_loc = exportDataObj.manifest_loc;
+      structureJS.config.manifest_name = exportDataObj.manifest_name;
+      /*We keep state on whether it's first run in order to avaoid relaoding the driver scripts
+      (NAME, UGLYFY_FILENAME,COMPRESSION_FILENAME) as well as the config for pm (EXPORT_CONFIG_FILENAME)
+      B/c we don't reload scripts we need to reset data all over the place. TODO: make data reseting
+      functional*/
+      if(structureJS.exportInitiated == true){
+        /*Clear old need tree*/
+        structureJS._needTree = {};
+        
+        /*Remove old manifest file*/
+        var head = document.getElementsByTagName('head')[0];
+        var scripts = document.getElementsByTagName('script');
+        var structureJSName = structureJS.NAME;
+        var uglify = structureJS.UGLYFY_FILENAME;
+        var compression = structureJS.COMPRESSION_FILENAME;
+        var exportConfig = structureJS.EXPORT_CONFIG_FILENAME;
+        var script = null;
+        
+        /*This is a holdover from when pm was loading the project up but now I realluy just
+        need to remove the export manifest TODO: explicitly look fro export manifest and remove
+        only it*/
+        var keeperScriptRegex = 
+          new RegExp('(' + structureJSName +'.js|'+ uglify + '.js|' + compression +'.js|' + exportConfig + '.js)$');
+        for(var i = 0; i < scripts.length; i++){
+          script = scripts[i];
+          /*Remove all script not keepers*/
+          if(keeperScriptRegex.test(script.src) == false && script.src != ''){
+            script.parentNode.removeChild(script);
+            console.log('Removing : ' + script.src);
+          }
+        }
+        
+        /*reload export target project manifest so exporting can reflect changes in
+        dependecy ording, group modification, new declared scripts, etc*/
+        structureJS.loadExportManifest(function(){
+          structureJS.exportResolveDependencies(false);
+          structureJS.require('structureJSCompress').executeExport();
+        });
+        
+        
+      }else{
+        /*This is the first run so we need to load up the pm config file*/
+        structureJS.loadConfig(function(){
+          /*In order to get access to defined groups we need to load the target
+          project manifest*/
+          structureJS.loadExportManifest(function(){
+            structureJS.exportResolveDependencies(true);
+            structureJS.exportInitiated = true;
+          });
+        
+        });
+      }
+
+      
+      
+      
+        
+      
+      
+      
+      
+    };
+  }else{
+    structureJS.loadConfigAndManifest(structureJS.resolveDependencies);
+  }
+    
+  
   /*@EndDeploymentRemove*/
 })(window);
