@@ -675,12 +675,13 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
   exportRemoveProjectManifest : function(){
     var config = this.config;
     var manfist = document.getElementById(config.manifest_name);
-    manifest.parentNode.removeChild(manifest);
+    if(manifest)
+      manifest.parentNode.removeChild(manifest);
   },
   /*This loads the project targeted for export's manifest*/
   exportLoadProjectManifest : function(callback){
     var config = structureJS.config;
-    this.loadScript( config.manifest_loc + config.manifest_name + '.js', callback, config.manifest_name);
+    this.loadScript( config.manifest_loc + config.manifest_name + '.js',callback, config.manifest_name);
   },
   exportConstructExportOrder : function(){
     var _this = this;
@@ -729,7 +730,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     this.config.manifest_loc = exportDataObj.manifest_loc;
     this.config.manifest_name = exportDataObj.manifest_name;
   },
-  exportInit : function(){
+  exportInit : function(callback){
     var _this = this;
     _this.exportLoadConfig(function(){
       /*In order to get access to defined groups we need to load the target
@@ -739,11 +740,13 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
         _this.exportConstructExportOrder();
         _this.exportLoadDrivers();
         _this.exportInitiated = true;
+        if(callback)
+          callback.call(null);
       });
     
     });
   },
-  exportUpdate : function(){
+  exportUpdate : function(callback){
     var _this = this;
     _this.exportRemoveProjectManifest();
     _this.exportResetState();
@@ -753,6 +756,21 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
       _this.exportResolveDependencies();
       _this.exportConstructExportOrder();
       _this.require('structureJSCompress').executeExport();
+      callback.call(null);
+    });
+  },
+  
+  exportGetFilesAndGroups : function(callback){
+    var _this = this;
+    _this.exportRemoveProjectManifest();
+    _this.exportResetState();
+    /*reload export target project manifest so exporting can reflect changes in
+    dependecy ording, group modification, new declared scripts, etc*/
+    _this.exportLoadProjectManifest(function(){
+      _this.exportResolveDependencies();
+      _this.exportConstructExportOrder();
+      if(callback)
+        callback.call(null);
     });
   }
   /*@EndDeploymentRemove*/

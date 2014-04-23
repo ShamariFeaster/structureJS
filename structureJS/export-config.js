@@ -9,7 +9,7 @@ structureJS.configure(
   globals : []
 },{
   download_minified : false,
-  minified_output_tag_id : 'minified'
-
+  minified_output_tag_id : 'minified',
+  cout_tag_id : 'cout'
 });
 

@@ -48,7 +48,7 @@ structureJS.module({name: 'structureJSCompress', type : 'Utility'}, function(req
       files = [];
       
       if(typeof thisGroup == 'undefined'){
-        files.push( projectBase + fileName + '.js');
+        files.push(fileName);
         var exportObj = {name : fileName, files : files, output : '', compress : compressFlg};
         exportList[exportObj.name] = exportObj;
       }else{
@@ -78,8 +78,12 @@ structureJS.module({name: 'structureJSCompress', type : 'Utility'}, function(req
   }
   
   
-  function processFileOutput(input){
+  function processFileOutputForHtml(input){
     return input.replace(/\n/g,'<br>').replace(/  /g,'&nbsp&nbsp&nbsp&nbsp');
+  }
+  
+  function processFileOutputForInnerText(input){
+    return input.replace(/  /g,'\t');
   }
 
   /*The scoping on this is INSANE. I honestly don't even understand why it works 
@@ -93,6 +97,14 @@ structureJS.module({name: 'structureJSCompress', type : 'Utility'}, function(req
   output from sequential, but interleaving, calls to getSrc.  */
   function combineSrcFiles(listName){
     var tempOutput = '';
+    var coutTag = document.getElementById(structureJS.options.cout_tag_id);
+    var minifiedTag = document.getElementById(structureJS.options.minified_output_tag_id);
+    
+    if(coutTag)
+      coutTag.innerText = '';
+    if(minifiedTag)
+      minifiedTag.innerText = '';
+      
     function callback(){
       
       if(indexes[listName]++ < exportList[listName].files.length){
@@ -117,12 +129,21 @@ structureJS.module({name: 'structureJSCompress', type : 'Utility'}, function(req
         console.log(exportList[listName].output);
         
         /*output to DOM*/
-        var outputTag = document.getElementById(structureJS.options.minified_output_tag_id);
-        if(outputTag)
-          outputTag.innerText = processFileOutput( exportList[listName].output );
+        if(exportList[listName].compress == false){
+          var coutTag = document.getElementById(structureJS.options.cout_tag_id);
+          if(coutTag)
+            coutTag.innerText += exportList[listName].output + '\n';
+        }else{
+          var minifiedTag = document.getElementById(structureJS.options.minified_output_tag_id);
+          if(minifiedTag)
+            minifiedTag.innerText += exportList[listName].output + '\n';
+        }
+        
+        
+        
         
         /*Should make this configurable b/c people hate popups*/
-        //window.open('http://localhost/structureJS/structureJS/export.html?exports=' + processFileOutput( exportList[listName].output) );
+        //window.open('http://localhost/structureJS/structureJS/export.html?exports=' + processFileOutputForHtml( exportList[listName].output) );
         
         /*Reset variables*/
         /*For subsequent exports in the same session we need to clear our objects
@@ -171,9 +192,9 @@ structureJS.module({name: 'structureJSCompress', type : 'Utility'}, function(req
         console.log(1, combinedSrc);
         
         /*output to DOM*/
-        var outputTag = document.getElementById(structureJS.options.minified_output_tag_id);
-        if(outputTag)
-          outputTag.innerText = combinedSrc;
+        var minifiedTag = document.getElementById(structureJS.options.minified_output_tag_id);
+        if(minifiedTag)
+          minifiedTag.innerText = combinedSrc;
         
         /*Download compressed file*/
         if(structureJS.options.download_minified == true)
@@ -216,7 +237,8 @@ structureJS.module({name: 'structureJSCompress', type : 'Utility'}, function(req
       }
     }else{
       for(var name in exportList){
-        combineSrcFiles( name );
+        if(name)
+          combineSrcFiles( name );
       }
     }
   };

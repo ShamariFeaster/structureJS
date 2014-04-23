@@ -32,26 +32,243 @@ function removeHash(str){
 /*structureJS API*/
 var _projectData = {};
 var doExport = null;
+var buildList = null;
+var getFilesAndGroups = null;
+var projectFiles = [];
+var projectGroups = {};
+var targets = {};
+
+function buildTargetString(){
+  var filename = '';
+  var target = null;
+  var targetString = '';
+  for(var file in targets){
+    console.log(targets[file]);
+    filename = file;
+    
+    if(targets[file].add == true){
+      targetString += filename;
+      
+      if(targets[file].compress == false){
+        targetString += '-u';
+      }
+      
+      targetString += ',';
+        
+      }
+    
+    
+  }
+  /*cut off trailing comma*/
+  if(targetString != '')
+    targetString = targetString.substr(0, targetString.length - 1);
+  
+  console.log('TARGET STRING: ' + targetString);
+  return targetString;
+}
+
+
+function setExportObj(){
+  var exportData = {}; 
+  exportData.files = buildTargetString();
+  exportData.base_dir =  _$('project_location').value || './';
+  exportData.manifest_loc =  _$('project_manifest_location').value || './';
+  exportData.manifest_name =  _$('project_manifest_name').value || 'manifest';
+  console.log(exportData);
+  return exportData;
+}
 
 window.sjsOnComplete = {};
 window.sjsOnComplete.projectManagerContext = this;
 window.sjsOnComplete.bind = function(){
   
   window.sjsOnComplete.projectManagerContext.doExport = function(){
-    var exportData = {};
-    exportData.files =  _$('target').value || '';
+    var _this = window.sjsOnComplete.projectManagerContext;
+    
+    var exportData = {}; 
+    exportData.files = buildTargetString();
     exportData.base_dir =  _$('project_location').value || './';
     exportData.manifest_loc =  _$('project_manifest_location').value || './';
     exportData.manifest_name =  _$('project_manifest_name').value || 'manifest';
+    console.log(exportData);
+    
     
     structureJS.exportLoadData(exportData);
     if(structureJS.exportInitiated == false){
-      structureJS.exportInit();
+    
+      structureJS.exportInit(function(){
+        /*Grabbing Manifest Info For use in this context*/
+        structureJS.exportGetFilesAndGroups(function(){
+          _this.projectFiles = structureJS._exportOrder;
+          _this.projectGroups = structureJS._groupNames;
+
+          var files = _this.projectFiles.concat(_this.projectGroups);
+          var row = null;
+          var label = null;
+          var nameTd = null;
+          var addTd = null;
+          var compressTd = null;
+          var checkbx = null;
+          var hdRow, hdName, hdAdd, hdCom;
+          hdRow = document.createElement('tr');
+          hdName = document.createElement('td');
+          hdAdd = document.createElement('td');
+          hdCom = document.createElement('td');
+          hdName.innerText = "File/Group Name";
+          hdAdd.innerText = "Add";
+          hdCom.innerText = "Compress";
+          hdRow.appendChild(hdName);
+          hdRow.appendChild(hdAdd);
+          hdRow.appendChild(hdCom);
+          _$('target_builder').appendChild(hdRow);
+          for(var i = 0; i < files.length; i++){
+            row = document.createElement('tr');
+            nameTd = document.createElement('td');
+            
+            addTd = document.createElement('td');
+            compressTd = document.createElement('td');
+            
+            label = document.createElement('label');
+            label.innerText = files[i];
+
+            nameTd.appendChild(label);
+            nameTd.setAttribute("width","200px");
+            
+            targets[files[i]] = {};
+            targets[files[i]].add = false;
+            targets[files[i]].compress = false;
+            
+            checkbx = document.createElement('input');
+            checkbx.type = 'checkbox';
+            checkbx.value = 'add';
+            checkbx.setAttribute('data-file', files[i]);
+            checkbx.addEventListener('click', function(e){
+              console.log(e.target);
+              var name = e.target.getAttribute('data-file');
+              console.log('Build List: ' + name);
+              if(e.target.checked == true){
+                targets[name].add = true;
+
+              }else{
+                targets[name].add = false;
+              }
+            });
+            addTd.appendChild(checkbx);
+            
+            checkbx = document.createElement('input');
+            checkbx.type = 'checkbox';
+            checkbx.value = 'compressed';
+            checkbx.addEventListener('click', function(e){
+              var name = e.target.getAttribute('data-file');
+              console.log(e.target);
+              console.log('Build List: ' + name);
+              if(e.target.checked == true){
+                targets[name].compress = true;
+              }else{
+                targets[name].compress = false;
+              }
+            });
+            checkbx.setAttribute('data-file', files[i]);
+            compressTd.appendChild(checkbx);
+            
+            row.appendChild(nameTd);
+            row.appendChild(addTd);
+            row.appendChild(compressTd);
+            
+            _$('#target_builder').appendChild(row);
+          }
+          
+        });
+        
+      });
+      
     }else{
-      structureJS.exportUpdate();
+      structureJS.exportUpdate(function(){
+        /*Grabbing Manifest Info For use in this context*/
+        structureJS.exportGetFilesAndGroups(function(){
+          _$('#target_builder').innerHTML = '';
+          _this.projectFiles = structureJS._exportOrder;
+          _this.projectGroups = structureJS._groupNames;
+
+          var files = _this.projectFiles.concat(_this.projectGroups);
+          var row = null;
+          var label = null;
+          var nameTd = null;
+          var addTd = null;
+          var compressTd = null;
+          var checkbx = null;
+          var hdRow, hdName, hdAdd, hdCom;
+          hdRow = document.createElement('tr');
+          hdName = document.createElement('td');
+          hdAdd = document.createElement('td');
+          hdCom = document.createElement('td');
+          hdName.innerText = "File/Group Name";
+          hdAdd.innerText = "Add";
+          hdCom.innerText = "Compress";
+          hdRow.appendChild(hdName);
+          hdRow.appendChild(hdAdd);
+          hdRow.appendChild(hdCom);
+          _$('target_builder').appendChild(hdRow);
+          for(var i = 0; i < files.length; i++){
+            row = document.createElement('tr');
+            nameTd = document.createElement('td');
+            
+            addTd = document.createElement('td');
+            compressTd = document.createElement('td');
+            
+            label = document.createElement('label');
+            label.innerText = files[i];
+
+            nameTd.appendChild(label);
+            nameTd.setAttribute("width","200px");
+            
+            targets[files[i]] = {};
+            targets[files[i]].add = false;
+            targets[files[i]].compress = false;
+            
+            checkbx = document.createElement('input');
+            checkbx.type = 'checkbox';
+            checkbx.value = 'add';
+            checkbx.setAttribute('data-file', files[i]);
+            checkbx.addEventListener('click', function(e){
+              var name = e.target.getAttribute('data-file');
+              console.log('Build List: ' + name);
+              if(e.target.checked == true){
+                targets[name].add = true;
+              }else{
+                targets[name].add = false;
+              }
+            });
+            addTd.appendChild(checkbx);
+            
+            checkbx = document.createElement('input');
+            checkbx.type = 'checkbox';
+            checkbx.value = 'compressed';
+            checkbx.addEventListener('click', function(e){
+              var name = e.target.getAttribute('data-file');
+              console.log('Build List: ' + name);
+              if(e.target.checked == true){
+                targets[name].compress = true;
+              }else{
+                targets[name].compress = false;
+              }
+            });
+            checkbx.setAttribute('data-file', files[i]);
+            compressTd.appendChild(checkbx);
+            
+            row.appendChild(nameTd);
+            row.appendChild(addTd);
+            row.appendChild(compressTd);
+            
+            _$('#target_builder').appendChild(row);
+          }
+          
+        });
+        
+      });
     }
   }
-  
+ 
 };
 
 
@@ -112,6 +329,7 @@ function loadProject(name){
   if(typeof project != 'undefined'){
     /*Repopulate fields*/
     for(var inputName in project){
+      if(inputName != 'target')
       _$(inputName).value = project[inputName];
     }
     var store = getStore();
@@ -124,7 +342,7 @@ function loadProject(name){
 function saveProject(){
   
   _projectData.project_name = _$('project_name').value || '';
-  _projectData.target = _$('target').value || '';
+  _projectData.target = buildTargetString();
   _projectData.project_location =  _$('project_location').value || './';
   _projectData.project_manifest_location =  _$('project_manifest_location').value || './';
   _projectData.project_manifest_name =  _$('project_manifest_name').value || 'manifest';
@@ -174,7 +392,10 @@ window.onload = function(){
   initProjectStore();
   updateSelect('#delete_select');
   updateSelect('#load_select');
-  
+  var _this = this;
+  /*Loading last project onload
+    Grabbing Manifest Info For use in this context*/
+  doExport();
   _$('#delete_project').addEventListener('click', function(){
     deleteProject(_$('#delete_select').value);
     updateSelect('#delete_select');
@@ -183,6 +404,7 @@ window.onload = function(){
   
   _$('load_project').addEventListener('click', function(){
     loadProject(_$('load_select').value);
+    targets = {};
   });
   
   var saveProjectBtn = _$('save_project');
@@ -203,11 +425,19 @@ window.onload = function(){
   <label for="project_location">Project Base Dir (Relative To This File): </label><input id="project_location" type="text"></input><br>
   <label for="project_manifest_name">Project Maniefest Name: </label><input id="project_manifest_name" type="text"></input> *Leave Blank If It's Named 'maifest'<br>
   <label for="project_manifest_location">Project Maniefest Location (Relative To Project Base Dir): </label><input id="project_manifest_location" type="text"></input><br>
-  <label for="target">Target: </label><input id="target" type="text"></input>
+  
   <br><label for="delete_select">Delete Project: </label><select id="delete_select" type="text"></select><button id="delete_project">Go</button>
   <br><label for="load_select">Load Project: </label><select id="load_select" type="text"></select><button id="load_project">Go</button>
+  
+  <table id="target_builder">
+
+  </table>
+  
   <br><button onclick="doExport()" id="export">Export</button>
   <br><button id="save_project">Save Project</button>
+  <h2>Uncompressed Output</h2>
+  <pre id="cout"></pre>
+  <h2>Compressed Output</h2>
   <div id="minified"></div>
 </body>
 
