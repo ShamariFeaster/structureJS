@@ -507,20 +507,6 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
       } );
     }
   },
-  
-  /*Should put onto export object to this clean up. NOTE: this loads the 
-  project manager interface (pmi) pm script's config*/
-  loadConfig : function(callback){
-    var structureTag = document.getElementById('structureJS');
-    this.loadScript( structureTag.getAttribute('data-config') + '.js', callback);
-  },
-  
-  /*This loads the project targeted for export's manifest*/
-  loadExportManifest : function(callback){
-    var config = structureJS.config;
-    this.loadScript( config.manifest_loc + config.manifest_name + '.js', callback);
-  },
-  
   /*Prototype for wrapping tlc components in class for cleaner semantics
     and less use of Object.keys(input)[0] for getting names*/
   tlcObj : function(name, deps){
@@ -531,51 +517,6 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
   },
   _tlc : function(name, dep){
     return new this.tlcObj(name, dep);
-  },
-  /*This loads up drivers for exportation. it takes state 
-  
-  TODO: instead of taking a state I should break the gloabal/common ordering 
-        and driver loadind into 2 functions*/
-  exportLoad : function(isFirstTime){
-    var _this = this;
-    var globals = _this.config.globals || [];
-    var commons = _this.config.commons || [];
-    _this._exportOrder = [];
-    /*Wrap commons and push onto front of modules*/
-    for(var i = commons.length - 1; i >= 0; i--){
-      var obj = {}; obj[commons[i]] = null;
-      _this._files.unshift(obj);
-    }
-    
-    /*Put globals at the front of the line.
-    Have to deep copy export order because we consume
-    it here. Shallow leaves us with empty exports*/
-    _this._files = globals.concat(_this._files);
-    for(var i = 0; i < _this._files.length; i++){
-      _this._exportOrder.push(_this.resolveFilePath( _this._files[i] ));
-    }
-    
-    /*put uglifyjs at front of globals if uglify mode*/
-    if(isFirstTime) {
-      _this.loadScript( _this.resolveFilePath( 'uglifyjs.min' ),
-        function(){
-          _this.loadScript(_this.resolveFilePath(_this.COMPRESSION_FILENAME),
-            function(){
-              console.log('Finished Export Load. Clearing _files');
-              _this._files = [];
-            })
-        });
-    }
-    
-    console.log(_this._exportOrder); 
-    
-  },
-  /*For export we need to order imports, dereference group names, insert common/globals
-    then (if necessary) load drivers  */
-  exportResolveDependencies : function(isFirstTime){
-    this._files = this.dereferenceGroups( this.orderImports(this._needTree) );
-    this.exportLoad(isFirstTime)
-    this.printOrder('Resolved Order: ', this._files);
   },
   /*@EndDeploymentRemove*/
   
@@ -714,6 +655,124 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     var options = this.options;
     this.extend(config, configObj);
     this.extend(options, optionsObj);
+  },
+  /*EXPORT FUNCTIONS*/
+  
+  /*Should put onto export object to this clean up. NOTE: this loads the 
+  project manager interface (pmi) pm script's config*/
+  exportLoadConfig : function(callback){
+    var structureTag = document.getElementById('structureJS');
+    this.loadScript( structureTag.getAttribute('data-config') + '.js', callback);
+  },
+  exportResetState : function(){
+    this._needTree = {};
+    this._files = [];
+    this._exportOrder = [];
+    this._groupNames = [];
+    this._groupsRDeps = {};
+  },
+  exportRemoveProjectManifest : function(){
+    var config = this.config;
+    /*Remove target project manifest*/
+    var head = document.getElementsByTagName('head')[0];
+    var scripts = document.getElementsByTagName('script');
+    var script = null;
+    var projectManifestRegex = 
+      new RegExp(config.manifest_loc + config.manifest_name + '.js$');
+    console.log(projectManifestRegex);
+    for(var i = 0; i < scripts.length; i++){
+      script = scripts[i];
+      /*Remove all script not keepers*/
+      if(projectManifestRegex.test(script.src) == true){
+        script.parentNode.removeChild(script);
+        console.log('Removing : ' + script.src);
+      }
+    }
+  },
+  /*This loads the project targeted for export's manifest*/
+  exportLoadProjectManifest : function(callback){
+    var config = structureJS.config;
+    this.loadScript( config.manifest_loc + config.manifest_name + '.js', callback);
+  },
+  exportConstructExportOrder : function(){
+    var _this = this;
+    var globals = _this.config.globals || [];
+    var commons = _this.config.commons || [];
+    
+    /*Wrap commons and push onto front of modules*/
+    for(var i = commons.length - 1; i >= 0; i--){
+      var obj = {}; obj[commons[i]] = null;
+      _this._files.unshift(obj);
+    }
+    
+    /*Put globals at the front of the line.
+    Have to deep copy export order because we consume
+    it here. Shallow leaves us with empty exports*/
+    _this._files = globals.concat(_this._files);
+    for(var i = 0; i < _this._files.length; i++){
+      _this._exportOrder.push(_this.resolveFilePath( _this._files[i] ));
+    }
+  },
+  /*This loads up drivers for exportation. it takes state 
+  
+  TODO: instead of taking a state I should break the gloabal/common ordering 
+        and driver loadind into 2 functions*/
+  exportLoadDrivers : function(){
+    _this = this;
+    _this.loadScript( _this.resolveFilePath( 'uglifyjs.min' ),
+      function(){
+        _this.loadScript(_this.resolveFilePath(_this.COMPRESSION_FILENAME),
+          function(){
+            console.log('Finished Export Load. Clearing _files');
+            
+          })
+      });
+    
+    
+     
+    
+  },
+  /*For export we need to order imports, dereference group names, insert common/globals
+    then (if necessary) load drivers  */
+  exportResolveDependencies : function(){
+    this._files = this.dereferenceGroups( this.orderImports(this._needTree) );
+    this.printOrder('Resolved Order: ', this._files);
+  },
+  exportLoadData : function(exportDataObj){
+    /*Get the data from the pmi*/
+    this.uglifyFiles = exportDataObj.files;
+    this.config.project_base = exportDataObj.base_dir;
+    this.config.manifest_loc = exportDataObj.manifest_loc;
+    this.config.manifest_name = exportDataObj.manifest_name;
+  },
+  exportInit : function(){
+    console.log('Export Init');
+    var _this = this;
+    _this.exportLoadConfig(function(){
+      /*In order to get access to defined groups we need to load the target
+      project manifest*/
+      _this.exportLoadProjectManifest(function(){
+        _this.exportResolveDependencies();
+        _this.exportConstructExportOrder();
+        _this.exportLoadDrivers();
+        _this.exportInitiated = true;
+      });
+    
+    });
+  },
+  exportUpdate : function(){
+    console.log('Export Update');
+    var _this = this;
+    _this.exportRemoveProjectManifest();
+    _this.exportResetState();
+    /*reload export target project manifest so exporting can reflect changes in
+    dependecy ording, group modification, new declared scripts, etc*/
+    _this.exportLoadProjectManifest(function(){
+      console.log(_this._needTree);
+      _this.exportResolveDependencies();
+      _this.exportConstructExportOrder();
+      _this.require('structureJSCompress').executeExport();
+    });
   }
   /*@EndDeploymentRemove*/
 };
@@ -742,76 +801,9 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     throw 'ERROR: No script tag with ID of "structureJS" which is required';  
 
   if(typeof window.sjsOnComplete != 'undefined' ){
-    /*By calling this we bind executeExport to a button in the project manager interface(pmi)*/
-    window.sjsOnComplete.func.call(null);
-
-    structureJS.initiateExport  = function(exportDataObj){
-      /*Get the data from the pmi*/
-      structureJS.uglifyFiles = exportDataObj.files;
-      structureJS.config.project_base = exportDataObj.base_dir;
-      structureJS.config.manifest_loc = exportDataObj.manifest_loc;
-      structureJS.config.manifest_name = exportDataObj.manifest_name;
-      /*We keep state on whether it's first run in order to avaoid relaoding the driver scripts
-      (NAME, UGLYFY_FILENAME,COMPRESSION_FILENAME) as well as the config for pm (EXPORT_CONFIG_FILENAME)
-      B/c we don't reload scripts we need to reset data all over the place. TODO: make data reseting
-      functional*/
-      if(structureJS.exportInitiated == true){
-        /*Clear old need tree*/
-        structureJS._needTree = {};
-        
-        /*Remove old manifest file*/
-        var head = document.getElementsByTagName('head')[0];
-        var scripts = document.getElementsByTagName('script');
-        var structureJSName = structureJS.NAME;
-        var uglify = structureJS.UGLYFY_FILENAME;
-        var compression = structureJS.COMPRESSION_FILENAME;
-        var exportConfig = structureJS.EXPORT_CONFIG_FILENAME;
-        var script = null;
-        
-        /*This is a holdover from when pm was loading the project up but now I realluy just
-        need to remove the export manifest TODO: explicitly look fro export manifest and remove
-        only it*/
-        var keeperScriptRegex = 
-          new RegExp('(' + structureJSName +'.js|'+ uglify + '.js|' + compression +'.js|' + exportConfig + '.js)$');
-        for(var i = 0; i < scripts.length; i++){
-          script = scripts[i];
-          /*Remove all script not keepers*/
-          if(keeperScriptRegex.test(script.src) == false && script.src != ''){
-            script.parentNode.removeChild(script);
-            console.log('Removing : ' + script.src);
-          }
-        }
-        
-        /*reload export target project manifest so exporting can reflect changes in
-        dependecy ording, group modification, new declared scripts, etc*/
-        structureJS.loadExportManifest(function(){
-          structureJS.exportResolveDependencies(false);
-          structureJS.require('structureJSCompress').executeExport();
-        });
-        
-        
-      }else{
-        /*This is the first run so we need to load up the pm config file*/
-        structureJS.loadConfig(function(){
-          /*In order to get access to defined groups we need to load the target
-          project manifest*/
-          structureJS.loadExportManifest(function(){
-            structureJS.exportResolveDependencies(true);
-            structureJS.exportInitiated = true;
-          });
-        
-        });
-      }
-
-      
-      
-      
-        
-      
-      
-      
-      
-    };
+    /*By calling this we bind executeExport to a button 
+      in the project manager interface(pmi)*/
+    window.sjsOnComplete.bind.call(null);
   }else{
     structureJS.loadConfigAndManifest(structureJS.resolveDependencies);
   }

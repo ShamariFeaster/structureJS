@@ -13,19 +13,22 @@ is works so I'm just going to leave it for now*/
 var doExport = null;
 
 window.sjsOnComplete = {};
-window.sjsOnComplete.context = this;
-window.sjsOnComplete.called = false;
-window.sjsOnComplete.func = function(){
-
-  var _this = window.sjsOnComplete.context;
-  _this.doExport = function(){
+window.sjsOnComplete.projectManagerContext = this;
+window.sjsOnComplete.bind = function(){
+  
+  window.sjsOnComplete.projectManagerContext.doExport = function(){
     var exportData = {};
     exportData.files =  document.getElementById('target').value || '';
     exportData.base_dir =  document.getElementById('project_location').value || './';
     exportData.manifest_loc =  document.getElementById('project_manifest_location').value || './';
     exportData.manifest_name =  document.getElementById('project_manifest_name').value || 'manifest';
     
-    structureJS.initiateExport(exportData);
+    structureJS.exportLoadData(exportData);
+    if(structureJS.exportInitiated == false){
+      structureJS.exportInit();
+    }else{
+      structureJS.exportUpdate();
+    }
   }
   
 };
