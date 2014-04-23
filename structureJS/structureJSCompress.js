@@ -119,11 +119,10 @@ structureJS.module({name: 'structureJSCompress', type : 'Utility'}, function(req
         /*output to DOM*/
         var outputTag = document.getElementById(structureJS.options.minified_output_tag_id);
         if(outputTag)
-          outputTag.innerHTML += '----- ' + listName + '-----<br>' 
-                              + processFileOutput( exportList[listName].output ) + '<br><br>';
+          outputTag.innerText = processFileOutput( exportList[listName].output );
         
         /*Should make this configurable b/c people hate popups*/
-        window.open('http://localhost/structureJS/structureJS/export.html?exports=' + processFileOutput( exportList[listName].output) );
+        //window.open('http://localhost/structureJS/structureJS/export.html?exports=' + processFileOutput( exportList[listName].output) );
         
         /*Reset variables*/
         /*For subsequent exports in the same session we need to clear our objects

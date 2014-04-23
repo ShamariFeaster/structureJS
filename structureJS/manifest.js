@@ -1,5 +1,5 @@
 structureJS.declare('C');  
-structureJS.declare('D',['DB','UI_Events']);
+structureJS.declare('D');
 
 //structureJS.declare('remote/group-UI');
 //structureJS.declare('D-jquery-dep', ['DB','C']);

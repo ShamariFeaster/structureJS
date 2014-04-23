@@ -32,7 +32,71 @@ window.sjsOnComplete.bind = function(){
   }
   
 };
+/*Proejct Stroe Operations*/
+function initProjectStore(){
+  var projectStore = {}
+  projectStore.projects = {};
+  projectStore.lastOpened = '';
+  if(typeof localStorage['project_store'] == 'undefined'){
+    localStorage['project_store'] = JSON.stringify(projectStore);
+  }
+}
+function getProjectStore(){
+  return JSON.parse(localStorage['project_store']).projects;
+}
+function setProjectStore(projectStore){
+  localStorage['project_store'] = JSON.stringify(projectStore);
+}
+function addProject(projectObj){
+  var store = getProjectStore();
+  store[projectObj.name] = projectObj;
+  setProjectStore({ projects : store });
+}
+function deleteProject(projectName){
+  var store = getProjectStore();
+  if(projectName !== '' && typeof store[projectName] != 'undefined'){
+    delete store[projectName];
+    setProjectStore({ projects : store });
+    console.log('Project: ' + projectName + ' Is Deleted From Store'); 
+    console.log(getProjectStore()); 
+  }else{
+    console.log('Project Name Not Recognized');
+  }
+   
+}
 
+function saveProject(){
+  var projectData = {};
+  projectData.name = document.getElementById('project_name').value || '';
+  projectData.files =  document.getElementById('target').value || '';
+  projectData.base_dir =  document.getElementById('project_location').value || './';
+  projectData.manifest_loc =  document.getElementById('project_manifest_location').value || './';
+  projectData.manifest_name =  document.getElementById('project_manifest_name').value || 'manifest';
+  
+  if(projectData.name == ''){
+    notifyUser('Project Must Have A Name');
+    return false;
+  }
+  addProject(projectData);
+  console.log( localStorage['project_store']);
+}
+
+
+function notifyUser(msg){
+  console.log(msg);
+}
+
+
+
+window.onload = function(){
+  initProjectStore();
+  var deleteProjectBtn = document.getElementById('delete_project');
+  deleteProjectBtn.addEventListener('click', function(){
+  console.log('Click');
+    deleteProject(document.getElementById('which_project').value);
+  });
+  
+};
 
 </script>
 <script id="structureJS" 
@@ -42,10 +106,15 @@ window.sjsOnComplete.bind = function(){
 
 </head>
 <body>
+  <label for="project_location">Project Name: </label><input id="project_name" type="text"></input><br>
   <label for="project_location">Project Base Dir (Relative To This File): </label><input id="project_location" type="text"></input><br>
   <label for="project_manifest_name">Project Maniefest Name: </label><input id="project_manifest_name" type="text"></input> *Leave Blank If It's Named 'maifest'<br>
   <label for="project_manifest_location">Project Maniefest Location (Relative To Project Base Dir): </label><input id="project_manifest_location" type="text"></input><br>
-  <label for="target">Target: </label><input id="target" type="text"></input><button onclick="doExport()" id="export">Export</button>
+  <label for="target">Target: </label><input id="target" type="text"></input>
+  <br><label for="which_project">Delete Project: </label><input id="which_project" type="text"></input><button id="delete_project">Go</button>
+  <br><button onclick="doExport()" id="export">Export</button>
+  <br><button onclick="saveProject()" id="save_project">Save Project</button>
+  <div id="minified"></div>
 </body>
 
 </html>

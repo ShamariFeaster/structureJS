@@ -9,7 +9,7 @@ structureJS.configure(
   globals : []
 },{
   download_minified : false,
-  minified_output_tag_id : 'mixy'
+  minified_output_tag_id : 'minified'
 
 });
 

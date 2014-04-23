@@ -185,12 +185,13 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
 
     return filePath;
   },
-  loadScript : function(url, callback){
+  loadScript : function(url, callback, id){
     this.pLog(1,'Loading: ' + url);
       var head = document.getElementsByTagName('head')[0];
       var script = document.createElement('script');
       script.type = 'text/javascript';
       script.src = url;
+      script.id = id;
       head.appendChild(script);
       script.onload = callback;
     },
@@ -673,26 +674,13 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
   },
   exportRemoveProjectManifest : function(){
     var config = this.config;
-    /*Remove target project manifest*/
-    var head = document.getElementsByTagName('head')[0];
-    var scripts = document.getElementsByTagName('script');
-    var script = null;
-    var projectManifestRegex = 
-      new RegExp(config.manifest_loc + config.manifest_name + '.js$');
-    console.log(projectManifestRegex);
-    for(var i = 0; i < scripts.length; i++){
-      script = scripts[i];
-      /*Remove all script not keepers*/
-      if(projectManifestRegex.test(script.src) == true){
-        script.parentNode.removeChild(script);
-        console.log('Removing : ' + script.src);
-      }
-    }
+    var manfist = document.getElementById(config.manifest_name);
+    manifest.parentNode.removeChild(manifest);
   },
   /*This loads the project targeted for export's manifest*/
   exportLoadProjectManifest : function(callback){
     var config = structureJS.config;
-    this.loadScript( config.manifest_loc + config.manifest_name + '.js', callback);
+    this.loadScript( config.manifest_loc + config.manifest_name + '.js', callback, config.manifest_name);
   },
   exportConstructExportOrder : function(){
     var _this = this;
@@ -727,10 +715,6 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
             
           })
       });
-    
-    
-     
-    
   },
   /*For export we need to order imports, dereference group names, insert common/globals
     then (if necessary) load drivers  */
@@ -746,7 +730,6 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     this.config.manifest_name = exportDataObj.manifest_name;
   },
   exportInit : function(){
-    console.log('Export Init');
     var _this = this;
     _this.exportLoadConfig(function(){
       /*In order to get access to defined groups we need to load the target
@@ -761,14 +744,12 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     });
   },
   exportUpdate : function(){
-    console.log('Export Update');
     var _this = this;
     _this.exportRemoveProjectManifest();
     _this.exportResetState();
     /*reload export target project manifest so exporting can reflect changes in
     dependecy ording, group modification, new declared scripts, etc*/
     _this.exportLoadProjectManifest(function(){
-      console.log(_this._needTree);
       _this.exportResolveDependencies();
       _this.exportConstructExportOrder();
       _this.require('structureJSCompress').executeExport();
@@ -799,7 +780,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
   var structureTag = document.getElementById('structureJS');//returns null if not found
   if(typeof structureTag === 'undefined' || structureTag === null)
     throw 'ERROR: No script tag with ID of "structureJS" which is required';  
-
+  
   if(typeof window.sjsOnComplete != 'undefined' ){
     /*By calling this we bind executeExport to a button 
       in the project manager interface(pmi)*/
