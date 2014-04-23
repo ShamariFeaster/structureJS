@@ -10,6 +10,27 @@ is not resolved. This avoids refernce errors because I could not guarantee struc
 be loaded on time. There is obviously a better way to do this like maybe writing a mini script loaded
 here that would execute master script then the logic contained here (in a file) next. Truthfully,
 is works so I'm just going to leave it for now*/
+function _$(idORClass){
+  idORClass = removeHash(idORClass)
+  var node = null;
+  if(idORClass instanceof Node)
+    node = idORClass;
+  else
+    node = document.getElementById(idORClass);
+
+  return node;
+}
+
+function removeHash(str){
+  var returnVal = str;
+  if(str[0] == '#')
+    returnVal = str.substr(1);
+  return returnVal;
+  
+}
+
+/*structureJS API*/
+var _projectData = {};
 var doExport = null;
 
 window.sjsOnComplete = {};
@@ -18,10 +39,10 @@ window.sjsOnComplete.bind = function(){
   
   window.sjsOnComplete.projectManagerContext.doExport = function(){
     var exportData = {};
-    exportData.files =  document.getElementById('target').value || '';
-    exportData.base_dir =  document.getElementById('project_location').value || './';
-    exportData.manifest_loc =  document.getElementById('project_manifest_location').value || './';
-    exportData.manifest_name =  document.getElementById('project_manifest_name').value || 'manifest';
+    exportData.files =  _$('target').value || '';
+    exportData.base_dir =  _$('project_location').value || './';
+    exportData.manifest_loc =  _$('project_manifest_location').value || './';
+    exportData.manifest_name =  _$('project_manifest_name').value || 'manifest';
     
     structureJS.exportLoadData(exportData);
     if(structureJS.exportInitiated == false){
@@ -32,69 +53,141 @@ window.sjsOnComplete.bind = function(){
   }
   
 };
-/*Proejct Stroe Operations*/
+
+
+
+/*Project Stroe Operations*/
 function initProjectStore(){
   var projectStore = {}
   projectStore.projects = {};
   projectStore.lastOpened = '';
   if(typeof localStorage['project_store'] == 'undefined'){
     localStorage['project_store'] = JSON.stringify(projectStore);
+  }else{
+    /*Have last project opened on startup*/
+    loadProject( getStore().lastOpened );
   }
 }
 function getProjectStore(){
   return JSON.parse(localStorage['project_store']).projects;
 }
-function setProjectStore(projectStore){
-  localStorage['project_store'] = JSON.stringify(projectStore);
+function getStore(){
+  return JSON.parse(localStorage['project_store']);
+}
+function setStore(store){
+  localStorage['project_store'] = JSON.stringify(store);
 }
 function addProject(projectObj){
-  var store = getProjectStore();
-  store[projectObj.name] = projectObj;
-  setProjectStore({ projects : store });
+  var store = getStore();
+  store.projects[projectObj.project_name] = projectObj;
+  setStore(store);
+  
 }
 function deleteProject(projectName){
-  var store = getProjectStore();
-  if(projectName !== '' && typeof store[projectName] != 'undefined'){
-    delete store[projectName];
-    setProjectStore({ projects : store });
-    console.log('Project: ' + projectName + ' Is Deleted From Store'); 
-    console.log(getProjectStore()); 
+  var store = getStore();
+  
+  if(projectName !== '' && typeof store.projects[projectName] != 'undefined'){
+    delete store.projects[projectName];
+    setStore(store);
   }else{
-    console.log('Project Name Not Recognized');
+    notifyUser('Project Name Not Recognized');
   }
-   
+}
+
+
+/*Project Retrieval & Manip*/
+
+function getProjectNames(){
+  var store = getProjectStore();
+  var names = [];
+  for(var name in store){
+    names.push(name);
+  }
+  return names;
+}
+
+function loadProject(name){
+  var store = getProjectStore();
+  var project = store[name];
+  if(typeof project != 'undefined'){
+    /*Repopulate fields*/
+    for(var inputName in project){
+      _$(inputName).value = project[inputName];
+    }
+    var store = getStore();
+    store.lastOpened = name;
+    setStore( store );
+  }
+  
 }
 
 function saveProject(){
-  var projectData = {};
-  projectData.name = document.getElementById('project_name').value || '';
-  projectData.files =  document.getElementById('target').value || '';
-  projectData.base_dir =  document.getElementById('project_location').value || './';
-  projectData.manifest_loc =  document.getElementById('project_manifest_location').value || './';
-  projectData.manifest_name =  document.getElementById('project_manifest_name').value || 'manifest';
   
-  if(projectData.name == ''){
+  _projectData.project_name = _$('project_name').value || '';
+  _projectData.target = _$('target').value || '';
+  _projectData.project_location =  _$('project_location').value || './';
+  _projectData.project_manifest_location =  _$('project_manifest_location').value || './';
+  _projectData.project_manifest_name =  _$('project_manifest_name').value || 'manifest';
+  
+  if(_projectData.name == ''){
     notifyUser('Project Must Have A Name');
     return false;
   }
-  addProject(projectData);
-  console.log( localStorage['project_store']);
+  addProject(_projectData);
+  updateSelect('#delete_select');
+  updateSelect('#load_select');
 }
 
+/*Select Manip*/
+function clearSelect(id){
+  var select = _$(id);
+  var options = select.childNodes;
+  for(var i = 0; i < options.length; i++){
+    options[i].parentNode.removeChild(options[i]);
+    i--;
+  }
+
+}
+function updateSelect(id){
+  //Remove '#'
+  id = removeHash(id);
+  clearSelect(id);
+  var select = _$(id);
+  var pNames = getProjectNames();
+  var option = null;
+
+  for(var i = 0; i < pNames.length; i++){
+    option = document.createElement('option');
+    option.value = pNames[i];
+    option.label = pNames[i];
+    select.appendChild(option);
+  }
+}
 
 function notifyUser(msg){
   console.log(msg);
 }
 
 
-
+/*Project Compiler Driver*/
 window.onload = function(){
   initProjectStore();
-  var deleteProjectBtn = document.getElementById('delete_project');
-  deleteProjectBtn.addEventListener('click', function(){
-  console.log('Click');
-    deleteProject(document.getElementById('which_project').value);
+  updateSelect('#delete_select');
+  updateSelect('#load_select');
+  
+  _$('#delete_project').addEventListener('click', function(){
+    deleteProject(_$('#delete_select').value);
+    updateSelect('#delete_select');
+    updateSelect('#load_select');
   });
+  
+  _$('load_project').addEventListener('click', function(){
+    loadProject(_$('load_select').value);
+  });
+  
+  var saveProjectBtn = _$('save_project');
+  saveProjectBtn.addEventListener('click', saveProject);
+
   
 };
 
@@ -111,9 +204,10 @@ window.onload = function(){
   <label for="project_manifest_name">Project Maniefest Name: </label><input id="project_manifest_name" type="text"></input> *Leave Blank If It's Named 'maifest'<br>
   <label for="project_manifest_location">Project Maniefest Location (Relative To Project Base Dir): </label><input id="project_manifest_location" type="text"></input><br>
   <label for="target">Target: </label><input id="target" type="text"></input>
-  <br><label for="which_project">Delete Project: </label><input id="which_project" type="text"></input><button id="delete_project">Go</button>
+  <br><label for="delete_select">Delete Project: </label><select id="delete_select" type="text"></select><button id="delete_project">Go</button>
+  <br><label for="load_select">Load Project: </label><select id="load_select" type="text"></select><button id="load_project">Go</button>
   <br><button onclick="doExport()" id="export">Export</button>
-  <br><button onclick="saveProject()" id="save_project">Save Project</button>
+  <br><button id="save_project">Save Project</button>
   <div id="minified"></div>
 </body>
 
