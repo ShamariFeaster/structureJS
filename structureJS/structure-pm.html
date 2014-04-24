@@ -37,7 +37,12 @@ var getFilesAndGroups = null;
 var projectFiles = [];
 var projectGroups = {};
 var targets = {};
-
+var lastBaseDir = '';
+var currentBaseDir = '';
+var isNewProject = false;
+/*Note aout paths:  they come in with the base directory put in front so in compress
+we take the raw file string and don't add anything to it. Also they file string here has .js on it
+so we make sure not to append it in compress*/
 function buildTargetString(){
   var filename = '';
   var target = null;
@@ -67,6 +72,84 @@ function buildTargetString(){
   return targetString;
 }
 
+function constructTargetChkBx(_this){
+  _this.projectFiles = structureJS._exportOrder;
+  _this.projectGroups = structureJS._groupNames;
+
+  var files = _this.projectFiles.concat(_this.projectGroups);
+  var row = null;
+  var label = null;
+  var nameTd = null;
+  var addTd = null;
+  var compressTd = null;
+  var checkbx = null;
+  var hdRow, hdName, hdAdd, hdCom;
+  hdRow = document.createElement('tr');
+  hdName = document.createElement('td');
+  hdAdd = document.createElement('td');
+  hdCom = document.createElement('td');
+  hdName.innerText = "File/Group Name";
+  hdAdd.innerText = "Add";
+  hdCom.innerText = "Compress";
+  hdRow.appendChild(hdName);
+  hdRow.appendChild(hdAdd);
+  hdRow.appendChild(hdCom);
+  _$('target_builder').appendChild(hdRow);
+  for(var i = 0; i < files.length; i++){
+    row = document.createElement('tr');
+    nameTd = document.createElement('td');
+    
+    addTd = document.createElement('td');
+    compressTd = document.createElement('td');
+    
+    label = document.createElement('label');
+    label.innerText = files[i];
+
+    nameTd.appendChild(label);
+    nameTd.setAttribute("width","200px");
+    
+    targets[files[i]] = {};
+    targets[files[i]].add = false;
+    targets[files[i]].compress = false;
+    
+    checkbx = document.createElement('input');
+    checkbx.type = 'checkbox';
+    checkbx.value = 'add';
+    checkbx.setAttribute('data-file', files[i]);
+    checkbx.addEventListener('click', function(e){
+      var name = e.target.getAttribute('data-file');
+      console.log('Build List: ' + name);
+      if(e.target.checked == true){
+        targets[name].add = true;
+
+      }else{
+        targets[name].add = false;
+      }
+    });
+    addTd.appendChild(checkbx);
+    
+    checkbx = document.createElement('input');
+    checkbx.type = 'checkbox';
+    checkbx.value = 'compressed';
+    checkbx.addEventListener('click', function(e){
+      var name = e.target.getAttribute('data-file');
+      console.log('Build List: ' + name);
+      if(e.target.checked == true){
+        targets[name].compress = true;
+      }else{
+        targets[name].compress = false;
+      }
+    });
+    checkbx.setAttribute('data-file', files[i]);
+    compressTd.appendChild(checkbx);
+    
+    row.appendChild(nameTd);
+    row.appendChild(addTd);
+    row.appendChild(compressTd);
+    
+    _$('#target_builder').appendChild(row);
+  }
+}
 
 function setExportObj(){
   var exportData = {}; 
@@ -92,6 +175,10 @@ window.sjsOnComplete.bind = function(){
     exportData.manifest_name =  _$('project_manifest_name').value || 'manifest';
     console.log(exportData);
     
+    if(lastBaseDir != ''){
+      isNewProject = (lastBaseDir != exportData.base_dir);
+      lastBaseDir = exportData.base_dir;
+    }
     
     structureJS.exportLoadData(exportData);
     if(structureJS.exportInitiated == false){
@@ -99,172 +186,18 @@ window.sjsOnComplete.bind = function(){
       structureJS.exportInit(function(){
         /*Grabbing Manifest Info For use in this context*/
         structureJS.exportGetFilesAndGroups(function(){
-          _this.projectFiles = structureJS._exportOrder;
-          _this.projectGroups = structureJS._groupNames;
-
-          var files = _this.projectFiles.concat(_this.projectGroups);
-          var row = null;
-          var label = null;
-          var nameTd = null;
-          var addTd = null;
-          var compressTd = null;
-          var checkbx = null;
-          var hdRow, hdName, hdAdd, hdCom;
-          hdRow = document.createElement('tr');
-          hdName = document.createElement('td');
-          hdAdd = document.createElement('td');
-          hdCom = document.createElement('td');
-          hdName.innerText = "File/Group Name";
-          hdAdd.innerText = "Add";
-          hdCom.innerText = "Compress";
-          hdRow.appendChild(hdName);
-          hdRow.appendChild(hdAdd);
-          hdRow.appendChild(hdCom);
-          _$('target_builder').appendChild(hdRow);
-          for(var i = 0; i < files.length; i++){
-            row = document.createElement('tr');
-            nameTd = document.createElement('td');
-            
-            addTd = document.createElement('td');
-            compressTd = document.createElement('td');
-            
-            label = document.createElement('label');
-            label.innerText = files[i];
-
-            nameTd.appendChild(label);
-            nameTd.setAttribute("width","200px");
-            
-            targets[files[i]] = {};
-            targets[files[i]].add = false;
-            targets[files[i]].compress = false;
-            
-            checkbx = document.createElement('input');
-            checkbx.type = 'checkbox';
-            checkbx.value = 'add';
-            checkbx.setAttribute('data-file', files[i]);
-            checkbx.addEventListener('click', function(e){
-              console.log(e.target);
-              var name = e.target.getAttribute('data-file');
-              console.log('Build List: ' + name);
-              if(e.target.checked == true){
-                targets[name].add = true;
-
-              }else{
-                targets[name].add = false;
-              }
-            });
-            addTd.appendChild(checkbx);
-            
-            checkbx = document.createElement('input');
-            checkbx.type = 'checkbox';
-            checkbx.value = 'compressed';
-            checkbx.addEventListener('click', function(e){
-              var name = e.target.getAttribute('data-file');
-              console.log(e.target);
-              console.log('Build List: ' + name);
-              if(e.target.checked == true){
-                targets[name].compress = true;
-              }else{
-                targets[name].compress = false;
-              }
-            });
-            checkbx.setAttribute('data-file', files[i]);
-            compressTd.appendChild(checkbx);
-            
-            row.appendChild(nameTd);
-            row.appendChild(addTd);
-            row.appendChild(compressTd);
-            
-            _$('#target_builder').appendChild(row);
-          }
-          
+          constructTargetChkBx(_this);
         });
-        
       });
       
     }else{
       structureJS.exportUpdate(function(){
-        /*Grabbing Manifest Info For use in this context*/
-        structureJS.exportGetFilesAndGroups(function(){
-          _$('#target_builder').innerHTML = '';
-          _this.projectFiles = structureJS._exportOrder;
-          _this.projectGroups = structureJS._groupNames;
-
-          var files = _this.projectFiles.concat(_this.projectGroups);
-          var row = null;
-          var label = null;
-          var nameTd = null;
-          var addTd = null;
-          var compressTd = null;
-          var checkbx = null;
-          var hdRow, hdName, hdAdd, hdCom;
-          hdRow = document.createElement('tr');
-          hdName = document.createElement('td');
-          hdAdd = document.createElement('td');
-          hdCom = document.createElement('td');
-          hdName.innerText = "File/Group Name";
-          hdAdd.innerText = "Add";
-          hdCom.innerText = "Compress";
-          hdRow.appendChild(hdName);
-          hdRow.appendChild(hdAdd);
-          hdRow.appendChild(hdCom);
-          _$('target_builder').appendChild(hdRow);
-          for(var i = 0; i < files.length; i++){
-            row = document.createElement('tr');
-            nameTd = document.createElement('td');
-            
-            addTd = document.createElement('td');
-            compressTd = document.createElement('td');
-            
-            label = document.createElement('label');
-            label.innerText = files[i];
-
-            nameTd.appendChild(label);
-            nameTd.setAttribute("width","200px");
-            
-            targets[files[i]] = {};
-            targets[files[i]].add = false;
-            targets[files[i]].compress = false;
-            
-            checkbx = document.createElement('input');
-            checkbx.type = 'checkbox';
-            checkbx.value = 'add';
-            checkbx.setAttribute('data-file', files[i]);
-            checkbx.addEventListener('click', function(e){
-              var name = e.target.getAttribute('data-file');
-              console.log('Build List: ' + name);
-              if(e.target.checked == true){
-                targets[name].add = true;
-              }else{
-                targets[name].add = false;
-              }
-            });
-            addTd.appendChild(checkbx);
-            
-            checkbx = document.createElement('input');
-            checkbx.type = 'checkbox';
-            checkbx.value = 'compressed';
-            checkbx.addEventListener('click', function(e){
-              var name = e.target.getAttribute('data-file');
-              console.log('Build List: ' + name);
-              if(e.target.checked == true){
-                targets[name].compress = true;
-              }else{
-                targets[name].compress = false;
-              }
-            });
-            checkbx.setAttribute('data-file', files[i]);
-            compressTd.appendChild(checkbx);
-            
-            row.appendChild(nameTd);
-            row.appendChild(addTd);
-            row.appendChild(compressTd);
-            
-            _$('#target_builder').appendChild(row);
-          }
-          
-        });
-        
+        if(isNewProject){
+          structureJS.exportGetFilesAndGroups(function(){
+            _$('#target_builder').innerHTML = '';
+            constructTargetChkBx(_this);
+          });
+        }
       });
     }
   }
