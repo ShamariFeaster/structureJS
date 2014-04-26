@@ -3,7 +3,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
   options : {
     download_minified : false,
     minified_output_tag_id : 'minified',
-    log_priority : 1
+    log_priority : 3
   },
   
   /*@StartDeploymentRemove*/
@@ -678,7 +678,9 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     if(manifest)
       manifest.parentNode.removeChild(manifest);
   },
-  /*This loads the project targeted for export's manifest*/
+  /*This loads the project targeted for export's manifest. Notice we attach the manifest
+  name specified in the pmi as an id of the script tag. we use this for removal of the tag 
+  further down to prevent multiple instances in the DOM*/
   exportLoadProjectManifest : function(callback){
     var config = structureJS.config;
     this.loadScript( config.manifest_loc + config.manifest_name + '.js',callback, config.manifest_name);
@@ -702,10 +704,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
       _this._exportOrder.push(_this.resolveFilePath( _this._files[i] ));
     }
   },
-  /*This loads up drivers for exportation. it takes state 
-  
-  TODO: instead of taking a state I should break the gloabal/common ordering 
-        and driver loadind into 2 functions*/
+  /*This loads up drivers for exportation. it takes state */
   exportLoadDrivers : function(){
     _this = this;
     _this.loadScript( _this.resolveFilePath( 'uglifyjs.min' ),
@@ -723,6 +722,8 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     this._files = this.dereferenceGroups( this.orderImports(this._needTree) );
     this.printOrder('Resolved Order: ', this._files);
   },
+  /*Executed on pmi right before loading of export manifest.
+  Brings data from pmi into this context*/
   exportLoadData : function(exportDataObj){
     /*Get the data from the pmi*/
     this.uglifyFiles = exportDataObj.files;
@@ -804,6 +805,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
       in the project manager interface(pmi)*/
     window.sjsOnComplete.bind.call(null);
   }else{
+    /*This would run in dev mode and be stripped out of production*/
     structureJS.loadConfigAndManifest(structureJS.resolveDependencies);
   }
     

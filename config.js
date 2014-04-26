@@ -1,6 +1,6 @@
 structureJS.configure(
 {
-  structureJS_base : 'structureJS/',
+  manifest_name : 'manifest',
   module_base : 'Modules/', 
   global_base : 'lib/',
   directory_aliases : {main : 'drivers/'},

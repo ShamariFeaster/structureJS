@@ -116,6 +116,7 @@ function constructTargetChkBx(_this){
     checkbx.type = 'checkbox';
     checkbx.value = 'add';
     checkbx.setAttribute('data-file', files[i]);
+    
     checkbx.addEventListener('click', function(e){
       var name = e.target.getAttribute('data-file');
       console.log('Build List: ' + name);
@@ -126,11 +127,13 @@ function constructTargetChkBx(_this){
         targets[name].add = false;
       }
     });
+    
     addTd.appendChild(checkbx);
     
     checkbx = document.createElement('input');
     checkbx.type = 'checkbox';
     checkbx.value = 'compressed';
+    
     checkbx.addEventListener('click', function(e){
       var name = e.target.getAttribute('data-file');
       console.log('Build List: ' + name);
@@ -165,11 +168,15 @@ window.sjsOnComplete = {};
 window.sjsOnComplete.projectManagerContext = this;
 window.sjsOnComplete.bind = function(){
   
-  window.sjsOnComplete.projectManagerContext.doExport = function(){
+  window.sjsOnComplete.projectManagerContext.doExport = function(all){
     var _this = window.sjsOnComplete.projectManagerContext;
-    
+    var target = '';
+    if(typeof all != 'undefined' && all === true)
+      target = '*';
+    else
+      target = buildTargetString();
     var exportData = {}; 
-    exportData.files = buildTargetString();
+    exportData.files = target;
     exportData.base_dir =  _$('project_location').value || './';
     exportData.manifest_loc =  _$('project_manifest_location').value || './';
     exportData.manifest_name =  _$('project_manifest_name').value || 'manifest';
@@ -358,16 +365,19 @@ window.onload = function(){
   <label for="project_location">Project Base Dir (Relative To This File): </label><input id="project_location" type="text"></input><br>
   <label for="project_manifest_name">Project Maniefest Name: </label><input id="project_manifest_name" type="text"></input> *Leave Blank If It's Named 'maifest'<br>
   <label for="project_manifest_location">Project Maniefest Location (Relative To Project Base Dir): </label><input id="project_manifest_location" type="text"></input><br>
-  
-  <br><label for="delete_select">Delete Project: </label><select id="delete_select" type="text"></select><button id="delete_project">Go</button>
+  <br>
   <br><label for="load_select">Load Project: </label><select id="load_select" type="text"></select><button id="load_project">Go</button>
-  
+  <br><label for="delete_select">Delete Project: </label><select id="delete_select" type="text"></select><button id="delete_project">Go</button>
+  <br><button id="save_project">Save Project</button>
+  <br>
+  <br>
   <table id="target_builder">
 
   </table>
   
-  <br><button onclick="doExport()" id="export">Export</button>
-  <br><button id="save_project">Save Project</button>
+  <br><button onclick="doExport(false)" id="export">Export Components</button>
+  <br><button onclick="doExport(true)" id="export">Export Compressed Project</button>
+  
   <h2>Uncompressed Output</h2>
   <pre id="cout"></pre>
   <h2>Compressed Output</h2>

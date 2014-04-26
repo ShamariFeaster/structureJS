@@ -1,11 +1,12 @@
-structureJS.module({name: 'structureJSCompress', type : 'Utility'}, function(require){
-  //console.log(structureJS._exportOrder);
+structureJS.module({name: 'structureJS-compress', type : 'Driver'}, function(require){
+  var core = require('core');
+  var dependency = require('structureJS-dependency');
+  
   var combinedSrc = '';
-  var moduleBase = structureJS.config.module_base;
-  var projectBase = structureJS.config.project_base;
-  var globalBase = structureJS.config.global_base;
+  var projectBase = core.config.project_base;
+  var globalBase = core.config.global_base;
   var exports = null;
-  var wholeProject = structureJS._exportOrder;
+  var wholeProject = core._exportOrder;
   var indexes = {};
   var exportList = {};
   var thisGroup = null;
@@ -30,8 +31,10 @@ structureJS.module({name: 'structureJSCompress', type : 'Utility'}, function(req
   }
   
   function parseFileList(){
-    exports = structureJS.uglifyFiles.split(',');
-    wholeProject = structureJS._exportOrder;
+    exports = core.uglifyFiles.split(',');
+    wholeProject = core._exportOrder;
+    projectBase = core.config.project_base;
+    globalBase = core.config.global_base;
     var files = [];
     var compressFlg = true;
     /*indexes are counters indexed on group name*/
@@ -44,7 +47,7 @@ structureJS.module({name: 'structureJSCompress', type : 'Utility'}, function(req
         }
       fileName = exports[i].trim();
       indexes[fileName] = 0;
-      thisGroup = structureJS[fileName];
+      thisGroup = core[fileName];
       files = [];
       
       if(typeof thisGroup == 'undefined'){
@@ -52,10 +55,13 @@ structureJS.module({name: 'structureJSCompress', type : 'Utility'}, function(req
         var exportObj = {name : fileName, files : files, output : '', compress : compressFlg};
         exportList[exportObj.name] = exportObj;
       }else{
-      
-        for(var file in thisGroup._needTree){
-          files.push(projectBase + moduleBase + file + '.js');
+
+        files = dependency.dereferenceGroups( dependency.orderImports(thisGroup._needTree) );
+        
+        for(var i = 0; i < files.length; i++){
+          files[i] = projectBase + dependency.getFilename(files[i]) + '.js'
         }
+              
         var exportObj = {name : fileName, files : files, output : '', compress : compressFlg};
         exportList[fileName] = exportObj;
 
@@ -97,8 +103,8 @@ structureJS.module({name: 'structureJSCompress', type : 'Utility'}, function(req
   output from sequential, but interleaving, calls to getSrc.  */
   function combineSrcFiles(listName){
     var tempOutput = '';
-    var coutTag = document.getElementById(structureJS.options.cout_tag_id);
-    var minifiedTag = document.getElementById(structureJS.options.minified_output_tag_id);
+    var coutTag = document.getElementById(core.options.cout_tag_id);
+    var minifiedTag = document.getElementById(core.options.minified_output_tag_id);
     
     if(coutTag)
       coutTag.innerText = '';
@@ -130,11 +136,11 @@ structureJS.module({name: 'structureJSCompress', type : 'Utility'}, function(req
         
         /*output to DOM*/
         if(exportList[listName].compress == false){
-          var coutTag = document.getElementById(structureJS.options.cout_tag_id);
+          var coutTag = document.getElementById(core.options.cout_tag_id);
           if(coutTag)
             coutTag.innerText += exportList[listName].output + '\n';
         }else{
-          var minifiedTag = document.getElementById(structureJS.options.minified_output_tag_id);
+          var minifiedTag = document.getElementById(core.options.minified_output_tag_id);
           if(minifiedTag)
             minifiedTag.innerText += exportList[listName].output + '\n';
         }
@@ -177,7 +183,7 @@ structureJS.module({name: 'structureJSCompress', type : 'Utility'}, function(req
       /*this.onload.fileName is myself but with state data attached by my calling
       function. This may be a better way to handle the synchronization & separation 
       I use on group exports*/
-      if(this.onload.fileName == structureJS.config.structureJS_base +structureJS.NAME+'.js' ){
+      if(this.onload.fileName == core.config.core_base + core.NAME+'.js' ){
         console.log('PROCESSIG DEPLOY VERSION');
         text = text.replace(deploymentRegex,'');
       }
@@ -192,12 +198,12 @@ structureJS.module({name: 'structureJSCompress', type : 'Utility'}, function(req
         console.log(combinedSrc);
         
         /*output to DOM*/
-        var minifiedTag = document.getElementById(structureJS.options.minified_output_tag_id);
+        var minifiedTag = document.getElementById(core.options.minified_output_tag_id);
         if(minifiedTag)
           minifiedTag.innerText = combinedSrc;
         
         /*Download compressed file*/
-        if(structureJS.options.download_minified == true)
+        if(core.options.download_minified == true)
           location.href = "data:application/octet-stream," + encodeURIComponent(combinedSrc);        
         
         //reset variables  
@@ -230,8 +236,8 @@ structureJS.module({name: 'structureJSCompress', type : 'Utility'}, function(req
     parseFileList();
     /*Driver*/
     if(exportProject == true){
-      if(structureJS.hasRemotes == false)
-        combineProjectSrcFiles( structureJS.config.structureJS_base +structureJS.NAME+'.js' );
+      if(core.hasRemotes == false)
+        combineProjectSrcFiles( core.config.core_base +core.NAME+'.js' );
       else{
         throw 'Error: Cannot minify because you are using remote files in the project'; 
       }
@@ -242,7 +248,7 @@ structureJS.module({name: 'structureJSCompress', type : 'Utility'}, function(req
       }
     }
   };
-  executeExport();
+  //executeExport();
 
   return { executeExport : executeExport};
 });

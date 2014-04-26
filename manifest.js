@@ -1,5 +1,5 @@
-//structureJS.declare('C');  
-//structureJS.declare('D');
+structureJS.declare('Modules/C');  
+structureJS.declare('Modules/D');
 //structureJS.declare('remote/group-UI');
 //structureJS.declare('D-jquery-dep', ['DB','C']);
 
@@ -15,10 +15,10 @@ structureJS.declareGroup({
   });  
 
 //populate group  
-structureJS.UI_Events.declare('MouseListener');
-structureJS.UI_Events.declare('KeyListener');
-structureJS.UI_Events.declare('DragResize', ['DB']);
+structureJS.UI_Events.declare('Modules/MouseListener');
+structureJS.UI_Events.declare('Modules/KeyListener');
+structureJS.UI_Events.declare('Modules/DragResize', ['DB']);
 structureJS.UI_Events.declare('DB');
 
-structureJS.DB.declare('IdbClient');
-structureJS.DB.declare('Mongo');
+structureJS.DB.declare('Modules/IdbClient');
+structureJS.DB.declare('Modules/Mongo');
