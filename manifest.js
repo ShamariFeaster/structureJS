@@ -33,9 +33,9 @@ structureJS.DB.declare('Modules/IdbClient');
 structureJS.DB.declare('Modules/Mongo', ['DB2']);
 structureJS.DB.declare('DB2');
 
-structureJS.DB2.declare('Modules/IdbClient');
-structureJS.DB2.declare('Modules/Mongo', ['DB3']);
+structureJS.DB2.declare('Modules/MouseListener');
+structureJS.DB2.declare('Modules/DragResize', ['DB3']);
 structureJS.DB2.declare('DB3');
 
-structureJS.DB3.declare('Modules/IdbClient');
-structureJS.DB3.declare('Modules/Mongo');
+structureJS.DB3.declare('Modules/D');
+structureJS.DB3.declare('Modules/C');
