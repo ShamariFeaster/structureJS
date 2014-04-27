@@ -1,11 +1,15 @@
 structureJS
 ===========
 
-With structureJS you are able to keep the structure of your Javascript app logically and physically separated into files, modules, and groups. You are able to view and change that structure from a single manifest file. Yet when it's time to deploy your app, you are able to deploy your app as a single, compressed file. structureJS is smart enough to remove parts of itself not necessary in deployment resulting in a tiny 3kB footprint. 
+structureJS is a Javascript developent tool written in Javascript. It is a module creator and loader file and/or module loader. It synchronizes file/module importation. It contains a tool called the Project Manager Interface (PMI) that lets you minify and combine your entire project using only your browser.
+
+It can do much more but listing it here would be terrible. I know, I tried.
 
 It is designed specificallty to fit in with your existing stack and will not get in the way of any other Javascript tools or frameworks in your developement stack (AngularJS for exaple). Once you use strucreJS to organize and modularize your projects, you will never go back to the old way.
 
-Use structureJS to:
+For Full Documentation Go To http://structrejs.wordpress.com
+
+OK, maybe I should say a bit more about structureJS here:
 
 1. Keep your app broken up into several files, modules, or groups
 2. Automatic dependency ordering and resolution
@@ -21,4 +25,4 @@ Use structureJS to:
 8. Logically group files and modules, export those groups to combined, compressed files 
 9. Automatic global dependency checking
 
-For Full Documentation Go To http://structrejs.wordpress.com
+
