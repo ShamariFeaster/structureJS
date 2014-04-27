@@ -41,77 +41,23 @@ structureJS does all of this using pure Javascript. You don't have to have node.
 
 ### How Do I Use It ###
 
-You need one  `script` tag and a couple of `data`  attributes in that tag to bootstrap an app with structureJS
+You need one `script` tag to bootstrap an app with structureJS
 
 ```html
-<script id="structureJS"
-    data-manifest="manifest"
-    data-config="config"
-    data-uglify-target="*"
-    src="structureJS/structureJS.js"/>
+<script id="structureJS" src="structureJS/structureJS-core.js"/>
 ```
 `id` - (required) must be "structureJS"
 
-`src` - (required) This points to the structureJS `structureJS.js` bootstrap file.**path relative to the HTML file containing this script tag**
-
-`data-manifest` - (required) This is where you declare the files your app will use and each file's dependencies. **path relative to the structureJS.js script NOT the HTML file containing this script tag**
-
-`data-config` - (optional) If you wish to use your own directory structure, modules available to all other modules (utilities for example), or gloabl scripts (jQuery for example) you use a config file and declare its name here. It doesn't have to be "config", it can be called whatever you want. **path relative to the structureJS.js script NOT the HTML file containing this script tag**
-
-`data-uglify-target` - (optional) This attribute tells structureJS to combine and/or minify a single file, a groups of files, or your entire app using UglifyJS right in your browser. The results can be downloaded, output to the console, opened in new windows - whatever you choose.
+`src` - (required) This points to the structureJS `structureJS-core.js` bootstrap file.**path relative to the HTML file containing this script tag**
 
 
-The typical directory structure looks like:
-```
-|-structureJS-master-copy(use one copy for all your projects)
-|-|-structureJS.js (structureJS bootstrap file.) (Required)
-|-|-structureJSCompress.js (Required to minify your app) (optional)
-|-|-uglifyjs.min.js (Required to minify your app) (optional)
-|
-|-myAppDirectory (dir)(You can call this whatever you want)
-|--|myapp.html (declaring the manifest and config files)
-|
-|--|-structureJS (dir) (you could name this whatever you want)
-|---|-manifest.js (Read further to learn what this is) (Required)
-|---|-config.js (Read further to learn what this is) (Optional)
-|
-|-ModulesDirectory (dir) (You can call this whatever you want)
-|--|-file1.js (This is where you define your modules)
-```
 ***How To Configure Using A Master Copy For All Projects***
 
 With structureJS you don't have to copy the app code into every project you use it in. Put it in a directory above your projects. The only structureJS specific files you need in each project is a config and manifest file.
 
 You could even create folder above all your projects that holds config and manifest files for each project. This way there is NO structureJS bloat in each project.
 
-What I mean by **master copy** is a single copy of `structureJS.js` somewhere on your server. Make sure all the other required files (structureJSCompress & uglifyjs.min.js) are in the same directory as your master copy.
-
-1. Point `data-config` and `data-manifest` attributes to each files location within a given project **RELATIVE TO THE MASTER COPY**
-
-2. In your project's `config.js` file, set `config.structureJS_base` property to directory containing the master copy **RELATIVE TO THE config.js LOCATION** 
-
-So given the directory structure above, your script tag in `myapp.html` would look like this: 
-
-```html
-<script id="structureJS"
-    data-manifest="../myAppDirectory/structureJS/manifest"
-    data-config="../myAppDirectory/structureJS/config"
-    data-uglify-target="*"
-    src="../structureJS-master-copy/structureJS.js"/>
-```
-
-And `config.js` in `myAppDirectory/structureJS` would look like this:
-
-```javascript
-structureJS.configure(
-{
-  structureJS_base : '../../structureJS-master-copy/',
-  module_base : 'Modules/', 
-  global_base : 'lib/',
-  //...More Config stuff
-```
-
-This is certainly not the most user friendly configuration setup but, personally, I think the benefits of having only a single copy of structureJS for all your projects make it worth the time. 
+What I mean by **master copy** is a single copy of structureJS somewhere on your server. 
 
 ### Importing Files ###
 
@@ -126,31 +72,20 @@ This is possible. Be aware that you lose the ability to have the import order au
 
 ### Configuring Your App ###
 
-Although structureJS comes with default configuration, you can configure the bootstrap process in a config file away from the structureJS source code. To do this put a call to 
+Although structureJS comes with default configuration, you can configure the bootstrap process in a config file away from the structureJS source code. Create a file in your project's root directory called `config.js`. In that file put a call to 
 
 `structureJS.configure(Object configSettings [, Object optionsSetting])`
-
-inside the config file you specified in `data-config` attribute of structureJS' `<script>` tag.
 
 **config.js**
 ```javascript
 structureJS.configure(
 {
-  structureJs_base : 'scripts/structureJs/',    //default: 'structureJS/'
-  module_base : 'scripts/structureJs/Modules/', //default: 'Modules/'
   global_base : 'scripts/structureJs/lib/',     //default: 'lib/'
   directory_aliases : {driver : 'drivers/'},    //default: undefined
   commons : ['Util'],                           //default: []
   globals : ['nastyGloablPollution']            //default: []
-},
-{
-  download_minified : false,                    //default: false
-  minified_output_tag_id : 'minified'           //default: 'minified'
 });
 ```
-`structureJs_base` - Path to where structureJS lives.
-
-`module_base` -  Defualt path to all files your app uses.
 
 `global_base` -  Path to the files you declare in the `globals` config array.
 
@@ -160,13 +95,9 @@ structureJS.configure(
 
 `directory_aliases` - Path to other files in your app. See instructions below
 
-`download_minified` - When set to true, structureJS will automatically download the results of minification to a file if your browser will allow it.
-
-`minified_output_tag_id` - In the event that your browser won't let you download your minification results and does not have a console to print them to, you may set this option to the `id` attribute of a `<div>` tag in you HTML and structureJS will print the results there.
-
 #### Directory Aliasing ####
 
-By default structureJS give you two places to put your app's files, `module_base` and `global_base`. You may want to use file from other locations. For example, you may have your driver scripts containing the application logic. These aren't modules so you probably wouldn't want to dump them into the default `Modules/` folder. Say you want to put them in a folder one level above your HTML page in a folder called `drivers/`.
+You may want to use file from other locations. For example, you may have your driver scripts containing the application logic. Say you want to put them in a folder one level above your HTML page in a folder called `drivers/`.
 
 Use the `structureJS.configure(Object configSettings [, Object optionsSetting])` function to configure the alias.
 ```javascript
@@ -203,6 +134,8 @@ structureJS.configure({
 Having one script depend on another's existence to function correctly is called a **dependency**. Managing dependencies in Javascript is notoriously difficult unless you use a program like RequireJS to deal with ordering things. Managing how and when scripts are loaded is called **dependency management**.
 
 structureJS performs dependency management by using a **manifest**. The manifest is where you declare the files your app will use and what other files those files depend on. Once you declare the structure of the app, structureJS makes sure the importation order is correct so that no script fail because their dependencies were loaded after them. This is called **dependency resolution**.
+
+A Manifest is REQUIRED for every structureJS project. Create a file in your project's root directory called `manifest.js`.
 
 #### Example Manifest File ####
 
@@ -257,22 +190,6 @@ If the structure of that group changes, the change will be reflected anywhere th
 Each group can have it's own dependency chain which will be automatically resolved before the group is inserted into any other dependency chain.
 
 It's called a logical group because the 3 files remain separate and the group only exists as a concept.
-
-**Turning Logical Groups Into Physical Ones**
-
-Using the same database example as above, let's suppose this group of files has worked really well in a couple projects but having to copy and paste the group declaration into every project is getting tedious. structureJS allows you to combine and minify a logical group into a single file using only your browser.
-
-To do this you would make the following change to your structureJS `<script>` tag:
-
-```html
-<script id="structureJS"
-    data-manifest="manifest"
-    data-config="config"
-    data-uglify-target="DB"     
-    src="structureJS/structureJS.js"/>
-```
-
-When you run the html page containing the above tag, structureJS will perform the combination and then output the results in a number of different ways. There's more on minification below.
 
 ### Modules ###
 
@@ -340,42 +257,6 @@ structureJS.module({
 
 The above module definition states that `Encrypt` requires that the `JSEncrypt` variable be available in the global namespace. structureJS will check for the existence of `JSEncrypt` when it loads the module and will throw an error if the variable does not exist.
 
-### Maintainability Through Module Semantics ###
-
-structureJS has some lightweight features that let you write self documenting code. When you define a module you can pass the module a `configuration` object contains important data to bootstrap the module as well as semantic data.
-
-Instead of a `name` string like in **file1.js**, we pass this module an object. Notice we define a module `type`. This `type` is purely semantic. It should describe the modules high-level function. For example is it a service? Or a singleton? Or a class?
-
-**Module1.js**
-```javascript
-structureJS.module({name: 'module1', type : 'class'}, function(require){
-    console.log('Hello From module1');
-    return {rUwasted: 'hell yea!'};
-});  
-```
-
-This improve reuse because, at a glance, you can know a modules high level function. 
-
-In structureJS a module can read the semantic data of other objects using the `require` function. 
-
-**Module2.js**
-```javascript
-structureJS.module('module1', function(require){
-    var module1 = require._class('module1');   //1
-    var $       = require.amd('jquery');       //2
-
-    console.log(require.getType('module1'));  //3   prints 'class'
-    console.log(require.getType('jqeury'));   //4   prints 'amd'
-    return {};
-});   
-```
-
-The example above shows some of the current semantic capabilities available structureJS modules. The require function has aliases attached to it that help specify what you are importing. At line 1, we use the `_class` alias to inform the user `module1` is a class. So even if we didn't print the module type like at line 3, a reader would know right away `module1` is a class that can be instantiated. 
-
-The same goes for modules loaded using AMD. They are automatically assigned a type of `amd` and can be imported using the `amd` alias of `require`.
-
-This is an experimental way to put documentation in the code. This may or may not be removed later on.
-
 ### Using Require Function In Non-Modules ###
 
 Remember structureJS is not just about creating modules. In fact you could use structureJS and never use a module. You could use it to synchronize your script load order and never touch the module functionality. 
@@ -384,59 +265,6 @@ If your main processing logic won't have potential re-usability then it really d
 
 structureJS let's you use the `structureJS.require` function. This is just an alias of the `require` function you use inside of modules so it works exactly the same way. 
 
-### Minification Using Just Your Browser ###
-
-structureJS uses the awesome work of UglifyJS to let you combine, compress, and mangle your app into a single file. structureJS will combine your files in the correct order. Currently, to download the compressed file you must have an HTML5 compliant browser. structureJS also gives you the option to display the out in a `<div>` tag, in the console, or have it open up as a pop up window.
-
-To minify your project simply set the `data-uglify-target` atrribute to a file name, group name, or a comma separated list comprised of files and/or groups. 
-
-```html
-<script id="structureJS"
-    data-manifest="structureJS/manifest"
-    data-config="structureJS/config"
-    data-uglify-target="group_name1, filename2"
-    src="structureJS/structureJS.js"/>
-```
-
-**NOTE:** For Chrome extensions, you will need to add `unsafe-eval` option to your content security policy object in your manifest. UglifyJS needs to use eval to work. Since minification doesn't need to be done in production you can simply remove this permission during deployment.
-
-`"content_security_policy": "script-src 'self' 'unsafe-eval' ; object-src 'self'"`
-
-See: https://developer.chrome.com/extensions/contentSecurityPolicy
-
-### Group Export ###
-
-You can turn a logical group into a single, physical file using the `data-uglify-target` option. The default action is combine and minify the group but you may have structureJS do a combination only by setting the `-u` flag after a group or file name in a `data-uglify-target` list. See the exaple below.
-
-```html
-<script id="structureJS"
-    data-manifest="structureJS/manifest"
-    data-config="structureJS/config"
-    data-uglify-target="group_name1 -u, filename2"
-    src="structureJS/structureJS.js"/>
-```
-
-### Creating A Deployment Version ###
-
-You would never want to have structureJS, or any module loader, dynamically importing 10 different Javascript files everytime someone visited you web site. This would create lots of separate http requests and degrade app/site performance. The ideal is to have your entire app to be combined and minified into a single file that is loaded with a single http request.
-
-You can easily create a combined and minified version of you app for deployment using structureJS and only your browser. To do this simply set the value of the `data-uglify-target` option to '*' like below.
-
-```html
-<script id="structureJS"
-    data-manifest="structureJS/manifest"
-    data-config="structureJS/config"
-    data-uglify-target="*"
-    src="structureJS/structureJS.js"/>
-```
-
-Save the results to a file called `myapp-production.js`. Now to deploy the app you put a single script tag like so:
-
-```html
-<script src="myapp-production.js"/>
-```
-
-Like I said above, structureJS is a development tool. Most of the logic contained is only of use in development. So when you are exporting your entire app, structreJS is smart enough to remove about 90% of itself from the minified version it packages with your deployment version. This results in structureJS haveing a total deployment size of aroun 3kB.
 
 ### AMD Compliance ###
 
