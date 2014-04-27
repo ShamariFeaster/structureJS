@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script id="structureJS" 
+        data-project-config-name="config/export-config"
+        data-project-manifest="manifest/core-export-manifest"
+        src="../core/structureJS-core.js"/>
+</script>
+
+</head>
+<body>
+  <label for="project_location">Project Name: </label><input id="project_name" type="text"></input><br>
+  <label for="project_location">Project Base Dir (Relative To This File): </label><input id="project_location" type="text"></input><br>
+  <label for="project_manifest_name">Project Maniefest Name: </label><input id="project_manifest_name" type="text"></input> *Leave Blank If It's Named 'maifest'<br>
+  <label for="project_manifest_location">Project Maniefest Location (Relative To Project Base Dir): </label><input id="project_manifest_location" type="text"></input><br>
+  <br>
+  <br><label class="test" for="load_select">Load Project: </label><select id="load_select" type="text"></select><button id="load_project">Go</button>*If you have changed you manifest reload your project
+  <br><label class="test" for="delete_select">Delete Project: </label><select id="delete_select" type="text"></select><button id="delete_project">Go</button>
+  <br><button class="test" id="save_project">Save Project</button>
+  <br>
+  <br>
+  <table id="target_builder">
+
+  </table>
+  
+  <br><button id="export_component">Export Components</button>
+  <br><button id="export_project">Export Compressed Project</button>
+  
+  <h2>Uncompressed Output</h2>
+  <pre id="cout"></pre>
+  <h2>Compressed Output</h2>
+  <div id="minified"></div>
+</body>
+
+</html>
