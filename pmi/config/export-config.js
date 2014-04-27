@@ -1,6 +1,6 @@
 structureJS.configure(
 { 
-  manifest_name : 'export-manifest',
+  manifest_name : 'manifest/export-manifest',
   global_base : 'lib/',
   directory_aliases : {mod_lib : '../Modules/'},
   commons : [], 

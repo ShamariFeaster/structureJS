@@ -343,7 +343,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     /*For core build p-base is same because resolveFilePath uses p-base*/
     core.config.project_base = core.config.core_base;
     /*use attrivs where you need config before config is loaded (ie. pmi)*/
-    core.config.manifest_name = structureJS.structureJSTag.getAttribute('data-project-manifest') || core.config.manifest_name;
+    core.config.manifest_name = structureJS.structureJSTag.getAttribute('data-core-manifest') || core.config.manifest_name;
     /*Load project config and manifest*/
     core.loadConfigAndManifest(function(){
       
@@ -370,8 +370,8 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
           core.resetCoreState();
           
           /*User may override default config name 'config' in script tag. Defaults to 'config'*/
-          core.config.config_name = structureJS.structureJSTag.getAttribute('data-project-config-name') || 'config';
-          core.config.manifest_name = structureJS.structureJSTag.getAttribute('data-project-manifest-name') || 'manifest';
+          core.config.config_name = structureJS.structureJSTag.getAttribute('data-project-config') || 'config';
+          core.config.manifest_name = structureJS.structureJSTag.getAttribute('data-project-manifest') || 'manifest';
           
           /*Project base is location of project config/manifest used to override 
           core build dir structure. Defaults to './' */
@@ -387,7 +387,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
         });/*End Core Resolve Block*/
       });
     });
-  }
+  }else{throw 'ERROR: he id attribute of the <script> tag is not set to "structureJS".';}
   /*@EndDeploymentRemove*/
   
 })();
