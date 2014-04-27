@@ -12,6 +12,7 @@ structureJS.module({name: 'structureJS-compress', type : 'Driver'}, function(req
   var thisGroup = null;
   var exportProject = false;
   var fileName = '';
+  var orderedGroupComponents = null;
   /* '.' DOES NOT match newlines, so here's the workaround */
   var deploymentRegex = /\/\*@StartDeploymentRemove\*\/[\S\s]*?\/\*@EndDeploymentRemove\*\//g;
   /*Configure
@@ -55,8 +56,9 @@ structureJS.module({name: 'structureJS-compress', type : 'Driver'}, function(req
         var exportObj = {name : fileName, files : files, output : '', compress : compressFlg};
         exportList[exportObj.name] = exportObj;
       }else{
-
-        files = dependency.dereferenceGroups( dependency.orderImports(thisGroup._needTree) );
+          console.log('Derefencing from parseList');
+        orderedGroupComponents = dependency.orderImportsNoTLCChange(thisGroup._needTree);
+        files = dependency.dereferenceGroups( orderedGroupComponents );
         
         for(var i = 0; i < files.length; i++){
           files[i] = projectBase + dependency.getFilename(files[i]) + '.js'

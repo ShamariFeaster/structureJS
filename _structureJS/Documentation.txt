@@ -1,0 +1,15 @@
+Everything in _structureJS is the core application
+
+Export mode
+
+config.js
+sets up structureJS-util as a common file
+
+data-core-manifest attrib set to override core manifest with one that includes compression
+and export tools. In a instance without this attribe core-manifest is run which is an empty
+file
+
+data-core-base attrib is the path to the core relative to the project
+data-project-base is the path to the project relative to the core
+
+Core structure

@@ -70,8 +70,9 @@ structureJS.module('structureJS-export',function(require){
     /*For export we need to order imports, dereference group names, insert common/globals
       then (if necessary) load drivers  */
     resolveDependencies : function(){
+      dependency.detectCircularDependency(core._needTree);
       core._files = dependency.dereferenceGroups( dependency.orderImports(core._needTree) );
-      dependency.printOrder('Resolved Order: ', core._files);
+      dependency.printOrder('Resolved Order: ', core._files, 3);
     },
     
     /*Executed on pmi right before loading of export manifest.

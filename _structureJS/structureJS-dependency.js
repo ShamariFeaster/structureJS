@@ -58,11 +58,19 @@ structureJS.module('structureJS-dependency',function(require){
    
       return false;
     },
+    /*This is needed but it will require thought. Not going to let this hold me back from*/
+    detectGroupCircularDependency : function(){
+      var groupNames = core._groupNames;
+      for(var i = 0; i < groupNames.length; i++){
+        this.detectCircularDependency( core[groupNames[i]]._needTree );
+      }
+    },
     /*This function converts our needTree into an array. The array structure is
     used through out because it is sortable. This function does the dependency
     sorting*/
-    orderImports : function(needTree){
-      this.detectCircularDependency(needTree);
+    orderImports : function(needTree, skipCleanTLC){
+      /*TODO: Check groups for circulars. Cycle through group names and run
+      detectCircularDependency on their needTrees*/
       var _this = this;
       var groupsRDeps = core._groupsRDeps;
       var modules = [];
@@ -73,8 +81,11 @@ structureJS.module('structureJS-dependency',function(require){
         modObj[fileName] = needTree[fileName];
 
         /*If you are a group, you have to be listed as a declared
-        dependencies to remain in TLC*/
-        if(core._groupNames.indexOf(fileName) > -1){
+        dependencies to remain in TLC. For group exports we need to skip this so
+        if flag is present then we skip this. HORRIBLE but this function is horrible
+        and breaking it up at this stage is not going to happen*/
+        
+        if(core._groupNames.indexOf(fileName) > -1 && typeof skipCleanTLC == 'undefined'){
           for(var groupName in groupsRDeps){
             if(fileName == groupName)
               modules.push( modObj );
@@ -162,43 +173,54 @@ structureJS.module('structureJS-dependency',function(require){
       this.printOrder('OrderImports: Ending Order: ', modules);
       return modules;
     },
+    orderImportsNoTLCChange : function(needTree){
+      return this.orderImports(needTree, true);
+    },
+    /*Note the use of iteration instead of recursion. This is to reduce the memory
+    footprint of the app. Recursion will create unecessary activation records whereas
+    pushing back the loop index to re-evaluate indexes is an O(1) op that acheives the 
+    same result*/
     dereferenceGroups : function(files){
       var fileName = '';
       var removeFileName = '';
       var beforeInsert = null;
       var afterInsert = null;
       var resultArray = null;
+      var resolvedGroup = null;
       var groupComponents = null;
-    
+      var pushBack = 0;
       /*Resolve group chains and splice results into TLC*/
       for(var i = 0; i < files.length; i++){
+        /*pushBack is used to make sure we re-evaluate previous indexes b/c
+        for group refs b/c thier contents have changed. Choosing not to
+        use recursion here b/c of the array insertion ops*/
+        i = Math.max(0, (i - pushBack)); 
+        pushBack = 0;
+        
         fileName = this.getFilename(files[i]);
         
-        //We found a reference to a soft group in top-level chain (TLC)
+        /*We found a reference to a soft group in top-level chain (TLC)*/
         if( core._groupNames.indexOf(fileName) > -1) {
 
-          //this.pLog(3,'\nResolving Group ' + fileName + ' Refernce');
-          groupComponents = core[fileName]._needTree;
           /*Remove Group Refs*/
-          for(var component in groupComponents){
-            
-            for(var i2 = 0; i2 < files.length; i2++){
-              removeFileName = this.getFilename(files[i2]);
+          for(var i2 = 0; i2 < files.length; i2++){
+            removeFileName = this.getFilename(files[i2]);
 
-              if(removeFileName == component){
-                //this.pLog(3,'Group: '+fileName+', removing: ' + removeFileName);
-                files.splice(i2, 1);
-              } 
-            }        
-          }
+            if(removeFileName == fileName){
+              //console.log('Group: '+fileName+', removing: ' + removeFileName);
+              files.splice(i2, 1);
+              pushBack++;
+            } 
+          }        
+
           /*this[fileName] is group object. we put it as prop of structureJS*/
           this.printOrder('Files: ',files,3);
           resolvedGroup = this.orderImports(core[fileName]._needTree);
     
           beforeInsert = files.slice(0,(i>0)? i : 0);
           this.printOrder('Before Insert: ',beforeInsert,3);
-          
-          afterInsert = files.slice(((i+1)<files.length)?(i+1) : files.length, files.length);
+          //console.log('i+1: ' + (i+1));
+          afterInsert = files.slice(((i+1)<files.length)?(i+1) : files.length-1, files.length);
           this.printOrder('After Insert: ',afterInsert,3);
 
           resultArray = beforeInsert.concat(resolvedGroup);
@@ -208,17 +230,16 @@ structureJS.module('structureJS-dependency',function(require){
           
           this.printOrder('Final Result: ',resultArray,3);
           
-          files = resultArray;
-          /*b/c we removed group name the array was shifted to the left by one
-          we decremenet i to compensate and make sure we don't miss resolving our
-          neighbor to the right*/
-          --i;
+          files = resultArray.slice(0, resultArray.length);
+          resultArray.length = 0;
+          
         }
       }
       return files;
     },
     /**/
     resolveDependencies : function(onComplete){
+      this.detectCircularDependency(core._needTree);
       core._files = this.dereferenceGroups( this.orderImports(core._needTree) );
       this.printOrder('Resolved Order: ', core._files);
       core.loadModules(core.config, onComplete);

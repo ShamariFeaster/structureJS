@@ -340,7 +340,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     var core_resolve = null;
     /*module and master file base are same on core build REQUIRED*/
     core.config.core_base = structureJS.structureJSTag.getAttribute('data-core-base');
-
+    core.config.manifest_name = structureJS.structureJSTag.getAttribute('data-core-manifest') || core.config.manifest_name;
     /*Load project config and manifest*/
     core.loadConfigAndManifest(function(){
     
