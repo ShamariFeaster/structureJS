@@ -7,7 +7,7 @@ It can do much more but listing it here would be terrible. I know, I tried.
 
 It is designed specificallty to fit in with your existing stack and will not get in the way of any other Javascript tools or frameworks in your developement stack (AngularJS for exaple). Once you use strucreJS to organize and modularize your projects, you will never go back to the old way.
 
-For Full Documentation Go To http://structrejs.wordpress.com
+For Full Documentation Go To http://structurejs.wordpress.com
 
 OK, maybe I should say a bit more about structureJS here:
 
