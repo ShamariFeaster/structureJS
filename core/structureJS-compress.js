@@ -56,8 +56,9 @@ structureJS.module({name: 'structureJS-compress', type : 'Driver'}, function(req
         var exportObj = {name : fileName, files : files, output : '', compress : compressFlg};
         exportList[exportObj.name] = exportObj;
       }else{
-          console.log('Derefencing from parseList');
+
         orderedGroupComponents = dependency.orderImportsNoTLCChange(thisGroup._needTree);
+
         files = dependency.dereferenceGroups( orderedGroupComponents );
         
         for(var i = 0; i < files.length; i++){

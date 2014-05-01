@@ -18,32 +18,90 @@ structureJS.module('structureJS-dependency',function(require){
       console.log(output);
       //this.pLog(priority,output);
     },
-    /*I'm thinking I want to keep this process iterative because it will be kinder to
-    memory than a recursive solution if the project is sufficently large. Note: we do
-    not detect duplicate declaration - again no baby sitting at the expense of 
-    maintainability.
-    TODO:  cleanup variable names WTF is modName2????? 
-    */
+    
+    detectUndeclaredGroupDependency : function(treeName, depName){
+      var retVal = true;
+      var needTree = null;
+      
+      if(typeof core[treeName] != 'undefined'){
+        needTree = core[treeName]._needTree;
+      }else{
+        needTree = core._needTree;
+      }
+      /*tc - tree component*/
+      for(var tc in needTree){//for Group Component (GC)
+        if(depName == tc)
+          retVal = false;
+      }
+   
+      return retVal;
+    },
+    /*When given a group name, we get that group's needTree*/
+    detectGroupCircularDependency : function(trgGroupName, circularName ){
+      /*Short circuit if this isn't group*/
+      if(core._groupNames.indexOf(trgGroupName) == -1)
+        return 0;
+       
+      /*Check if declared groups are dependencies. If they aren't then I need to
+        remove them from TLC. Removal happens in orderImports()*/ 
+      if(core._groupNames.indexOf(trgGroupName) > -1)
+        core._groupsRDeps[trgGroupName] = 1;
+        
+      var circularName = (typeof circularName == 'undefined')? '' : circularName;
+      var retVal = 0;
+      var thisDepList = null;
+      var thisDepName = '';
+      var groupNeedTree = core[trgGroupName]._needTree;
+      
+      for(var modName in groupNeedTree){
+        
+        
+        /*Check if the GC is a circular*/
+        if(modName == circularName)
+            return 1;
+        thisDepList = groupNeedTree[modName];
+        /*go through every group component (GC) and GC dependency (GCD) 
+          looking for circular ref to GC's parent*/
+        for(var i = 0; i < thisDepList.length; i++){
+          thisDepName = thisDepList[i];
+          
+          if(this.detectUndeclaredGroupDependency(trgGroupName, thisDepName) == true){
+            throw 'ERROR: ' + thisDepName + ' Is Undeclared Dependency Of ' + trgGroupName;
+          }
+          
+          if(thisDepName == circularName)
+            return 1;
+          /*if GCD is group, we go down into that group deps and try to find refernce to ourself.
+            If at any point down that rabit hole we encounter this situ, that false will propagate
+            back up to us and make it impossible for this function to return a false value*/
+          if(core._groupNames.indexOf(thisDepName) > -1)
+            retVal = retVal | this.detectGroupCircularDependency(thisDepName, trgGroupName);
+        }
+      }
+      
+      return retVal;
+    },
     detectCircularDependency : function(needTree){
       var _thisDeps = null;
       var modName1 = '';
       var modName2 = '';
       var modName3 = '';
-      for(var modName1 in needTree){//for every module
-       //this.pLog(2,'Checking '+modName1+'\'s dependencies');
-       
+      for(var modName1 in needTree){//for Group Component (GC)
+
+        if( this.detectGroupCircularDependency(modName1) == 1)
+          throw 'ERROR: "' + modName1 + '" Is A Group With A Circular Dependency.';
+          
+        
         for(var i1 = 0;i1 < needTree[modName1].length; i1++){//go through it's depenedencies
           modName2 = needTree[modName1][i1];
-          //this.pLog(2,'Dependency '+i1+' of '+modName1+' is '+ modName2);
-          /*Check if declared groups are dependencies. If they aren't then I need to
-          remove them from TLC. Removal happens in orderImports()*/
-          if(core._groupNames.indexOf(modName2) > -1){
-            core._groupsRDeps[modName2] = 1;
-          }
-          if(typeof needTree[modName2] !== 'undefined'){//my dependency list
+
+          if( this.detectGroupCircularDependency(modName2) == 1)
+           throw 'ERROR: "' + modName2 + '" Is A Group With A Circular Dependency.';
+           
+          if(typeof needTree[modName2] !== 'undefined'){//modName2's dependency list
             for(var i2 = 0;i2 < needTree[modName2].length; i2++){//make sure module isn't a dependency of its own dependency
               modName3 = needTree[modName2][i2];
-              //this.pLog(2,'Checking '+modName2+'\'s dependencies for circular reference to parent '+modName1 );
+
               if(modName1 == modName3){
                 throw 'ERROR: CIRCULAR DEPENDENCY: ' + modName1 + ' is a dependency of its own dependency ' + modName2;
               }
@@ -57,13 +115,6 @@ structureJS.module('structureJS-dependency',function(require){
       }
    
       return false;
-    },
-    /*This is needed but it will require thought. Not going to let this hold me back from*/
-    detectGroupCircularDependency : function(){
-      var groupNames = core._groupNames;
-      for(var i = 0; i < groupNames.length; i++){
-        this.detectCircularDependency( core[groupNames[i]]._needTree );
-      }
     },
     /*This function converts our needTree into an array. The array structure is
     used through out because it is sortable. This function does the dependency
@@ -220,7 +271,8 @@ structureJS.module('structureJS-dependency',function(require){
           beforeInsert = files.slice(0,(i>0)? i : 0);
           this.printOrder('Before Insert: ',beforeInsert,3);
           //console.log('i+1: ' + (i+1));
-          afterInsert = files.slice(((i+1)<files.length)?(i+1) : files.length-1, files.length);
+          //afterInsert = files.slice(((i+1)<files.length)?(i+1) : files.length-1, files.length);
+          afterInsert = files.slice(i, files.length);
           this.printOrder('After Insert: ',afterInsert,3);
 
           resultArray = beforeInsert.concat(resolvedGroup);

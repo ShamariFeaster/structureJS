@@ -160,6 +160,7 @@
     projectData.project_location =  _$('#project_location').node().value || './';
     projectData.project_manifest_location =  _$('#project_manifest_location').node().value || './';
     projectData.project_manifest_name =  _$('#project_manifest_name').node().value || 'manifest';
+    projectData.project_config_name =  _$('#project_config_name').node().value || 'config';
     
     if(projectData.name == ''){
       notifyUser('Project Must Have A Name');
@@ -233,7 +234,7 @@
     exportData.base_dir =  _$('#project_location').node().value || './';
     exportData.manifest_loc =  _$('#project_manifest_location').node().value || './';
     exportData.manifest_name =  _$('#project_manifest_name').node().value || 'manifest';
-
+    exportData.config_name =  _$('#project_config_name').node().value || 'config';
     return exportData;
   }
   
@@ -249,24 +250,34 @@
       isNewProject = (lastBaseDir != exportData.base_dir);
       setLastOpened(exportData.base_dir);
     }
-  console.log(isNewProject);
+
     if(_core.exportInitiated == false){
-    
-      _export.init(exportData, function(){
-        /*Grabbing Manifest Info For use in this context*/
-        _export.getFilesAndGroups(function(){
-          constructTargetChkBx(_member, _core);
-        });
+
+      _export.init(exportData, function(errorMsg){
+        if(errorMsg != null){
+          /*Alert user that Circular was detected*/
+          alert(errorMsg);
+        }else{
+          /*Grabbing Manifest Info For use in this context*/
+          _export.getFilesAndGroups(function(){
+            constructTargetChkBx(_member, _core);
+          });
+        }
+        
       });
-      
+   
     }else{
-      _export.update(exportData, function(){
-        if(isNewProject){
+      _export.update(exportData, function(errorMsg){
+        if(errorMsg != null){
+          /*Alert user that Circular was detected*/
+          alert(errorMsg);
+        }else if(isNewProject){
           _export.getFilesAndGroups(function(){
             _$('#target_builder').node().innerHTML = '';
             constructTargetChkBx(_member, _core);
           });
         }
+        
       });
     }
   }

@@ -15,7 +15,8 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     project_base : '', /*defaults to './'*/ 
     manifest_name : 'manifest/core-manifest',/*These are default for the core*/
     config_name : 'config/config',/*These are default for the core*/
-    global_base : '',
+    bootstrap_base : null,
+    bootstrap_config : null,
     globals : [],
     commons : []
     },
@@ -63,19 +64,40 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     this._exportOrder = [];
     this._groupNames = [];
     this._groupsRDeps = {};
+    this.config.globals.length = 0;
+    this.config.commons.length = 0;
   },
-  extend : function(target, src){
+  extend : function(target, src, unshiftArrays){
     if( (target && typeof target !== 'object') || (src && typeof src !== 'object'))
       throw 'Error: extend param is not an an oject';
     for(var prop in src){
-      target[prop] = src[prop];
+      //console.log('prop: ' + prop + ' ' + target[prop]);
+      /*For cascading configs, we push to arrays instead of clobbering*/
+      if(Array.isArray(target[prop]) == true && Array.isArray(src[prop]) == true){
+        if(typeof unshiftArrays != 'undefined' && unshiftArrays == true ){
+          target[prop] = src[prop].concat(target[prop]);
+        }else{
+          target[prop] = target[prop].concat(src[prop]);
+        }
+      /*enumerate object and write diffs*/
+      }else if(typeof target[prop] === 'object' && typeof src[prop] === 'object'){
+        for(var srcProp in src[prop]){
+          target[prop][srcProp] = src[prop][srcProp];
+        }
+      /*clobber*/  
+      }else{
+        target[prop] = src[prop];
+      }
+      
     }
   },
   configure : function(configObj, optionsObj){
-    var config = this.config;
-    var options = this.options;
-    this.extend(config, configObj);
-    this.extend(options, optionsObj);
+    this.extend(this.config, configObj);
+    this.extend(this.options, optionsObj);
+  },
+  bootstrapConfigure : function(configObj, optionsObj){
+    this.extend(this.config, configObj, true);
+    this.extend(this.options, optionsObj);
   },
   resolveFilePath : function(input){
     var _this = this;
@@ -89,7 +111,8 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     function resolveDirectoryAliases(input, defaultBase){
       var aliases = config.directory_aliases;
       var results = '';
-      console.log(input + ' is CDN: ' +cdnRegex.test(input));
+      //console.log(input + ' is CDN: ' +cdnRegex.test(input));
+      //console.log(config.directory_aliases);
       /*Before returning replace 'remote' with remote URL*/
       if(new RegExp(remoteRegex).test(input)){
         results = input.replace(remoteRegex, _this.REMOTE_URL) + '.js';
@@ -125,7 +148,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     }else if(input == this.UGLYFY_FILENAME){
      filePath = resolveDirectoryAliases(input, config.core_base + config.core_lib_folder);//config.core_base + input + '.js';
     }else if(typeof input === 'string'){
-      filePath = resolveDirectoryAliases(input, config.project_base + config.global_base)//config.global_base + input + '.js';
+      filePath = resolveDirectoryAliases(input, config.project_base )//config.global_base + input + '.js';
     }
     return filePath;
   },
@@ -151,7 +174,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     for(var i = 0; i < _this._files.length; i++){
       _this._exportOrder.push(_this.resolveFilePath( _this._files[i] ));
     }
-    console.log(_this._exportOrder);
+
     //recursive callback
     var callback = function(){
       var filePath = _this.resolveFilePath( _this._files.shift() );
@@ -196,9 +219,35 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
         
       
     }
-    /*Config is now mandatory*/
-    console.log('Loading Config: ' +  baseDir + this.config.config_name );
-    this.loadScript( baseDir + this.config.config_name + '.js', callback );
+      /* Bootstraping Frameworks
+        --------------------------------------------------
+        Bootstrap framework's files must be preceeded with 'bootstrap' alias. This
+        is set here per-project because all script loading is relative to tag location.
+        without this bootstrap could not load.*/
+
+      /* Configuring Framework Specific Project Files
+        ---------------------------------------------
+        Use can set per-project loactions for framework-specific files by using aliases
+        in bootstrap config like 'angular' which would resolve to 'angular/' in specific
+        project*/
+      var thisCallback = function(){
+        _this.loadScript(_this.config.directory_aliases.bootstrap + _this.config.bootstrap_config + '.js', callback);
+      };
+      
+      /*Load bootstrap config. Core config has been reset using resetCoreState()*/
+      this.loadScript(baseDir + _this.config.config_name + '.js' , function(){
+        /*User must have 'bootstrap' directory_alias set to Bootstrap directory AND
+          they must have 'bootstrap_config' set to framework config file. Config file
+          locations are relative to 'Bootstraps' directory*/
+        if( (typeof _this.config.directory_aliases != 'undefined' && typeof _this.config.directory_aliases.bootstrap == 'undefined') 
+        || _this.config.bootstrap_config == null){
+         thisCallback =  callback;
+        }
+         
+         thisCallback.call(null);
+      });
+    
+    
 
     
   },
@@ -376,9 +425,12 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
           /*Project base is location of project config/manifest used to override 
           core build dir structure. Defaults to './' */
           core.config.project_base = core.structureJSTag.getAttribute('data-project-base') || './';
-
           
-          /*Resolve and load project files*/
+          /*If use sets these two in tag we bootstrap whatever framework they point to*/
+          core.config.bootstrap_base = structureJS.structureJSTag.getAttribute('data-bootstrap-base') || null;
+          core.config.bootstrap_config = structureJS.structureJSTag.getAttribute('data-bootstrap-config') || null;
+          
+          /*Explicitly load project manifest & config files, then resolve deps*/
           core.loadConfigAndManifest(function(){
             core_resolve.resolveDependencies();/*End Project Resolve Block*/
           });
