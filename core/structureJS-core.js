@@ -39,7 +39,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
   UGLYFY_FILENAME : 'uglifyjs.min',
   EXPORT_CONFIG_FILENAME : 'export-config',
   REMOTE_KEYWORD : 'remote',
-  REMOTE_URL : 'http://deeperhistory.info/structureJS/',
+  REMOTE_URL : 'https://deeperhistory.info/structureJS/wordpress/wp-content/Modules/',
   /*@EndDeploymentRemove*/
   
   _modules : {},
