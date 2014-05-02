@@ -17,6 +17,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     config_name : 'config/config',/*These are default for the core*/
     bootstrap_base : null,
     bootstrap_config : null,
+    directory_aliases : {export_bootstrap : '../../structureJS/Bootstraps/'},
     globals : [],
     commons : []
     },
@@ -193,11 +194,11 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     _this.loadScript( this.resolveFilePath( _this._files.shift() ) , callback );
     
   },
-  loadConfigAndManifest : function(onLoaded){
+  loadConfigAndManifest : function(onLoaded, bootstrapBase){
     /*First Run through use structreJS base passed in via tag*/
     var baseDir = '',
+        bootstrapLoc = '',
        _this = this;
-       
     if(this.config.project_base == '')
       baseDir = this.config.core_base;
     else
@@ -230,15 +231,26 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
         Use can set per-project loactions for framework-specific files by using aliases
         in bootstrap config like 'angular' which would resolve to 'angular/' in specific
         project*/
+        
+        /*This runs if we user has set 'bootstrap_config' in ptoject config. This makes bootstrap config 
+       fun before our manifest*/
       var thisCallback = function(){
-        _this.loadScript(_this.config.directory_aliases.bootstrap + _this.config.bootstrap_config + '.js', callback);
+        /*no worries about 'directory_aliases.bootstrap' being undefined b/c this won't
+          run if that's the case. This whole construct is to allow structureJS-export
+          to set the bootstrap location relative to itself, since that's the context in
+          which scripts get loaded in the PMI. The alternative was copying this function into
+          structureJS-export*/
+        bootstrapLoc = (typeof bootstrapBase == 'undefined') ? 
+                            _this.config.directory_aliases.bootstrap : bootstrapBase;
+                            
+        _this.loadScript(bootstrapLoc + _this.config.bootstrap_config + '.js', callback);
       };
       
       /*Load bootstrap config. Core config has been reset using resetCoreState()*/
       this.loadScript(baseDir + _this.config.config_name + '.js' , function(){
-        /*User must have 'bootstrap' directory_alias set to Bootstrap directory AND
-          they must have 'bootstrap_config' set to framework config file. Config file
-          locations are relative to 'Bootstraps' directory*/
+        /*We restore normal import order is user has not set 'bootstrap_config' in project config
+          AND 'directory_aliases.bootstrap' is set. Without this we don't know where bootstrap files
+          are relative to our project*/
         if( (typeof _this.config.directory_aliases != 'undefined' && typeof _this.config.directory_aliases.bootstrap == 'undefined') 
         || _this.config.bootstrap_config == null){
          thisCallback =  callback;
@@ -246,10 +258,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
          
          thisCallback.call(null);
       });
-    
-    
 
-    
   },
   /*@EndDeploymentRemove*/
   
