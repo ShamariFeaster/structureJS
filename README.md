@@ -29,12 +29,10 @@ For Written Documentation http://structurejs.wordpress.com/ Hover over "Docs" Me
 OK, maybe I should say a bit more about structureJS here:
 
 1. Written in pure javascript, runs in your browser (ie, no crazy ANT builds or NPM installs)
-2. Keep your app broken up into several files, modules, or groups
-2. Automatic dependency resolution
-2. Compatible with any framework or existing stack
+2. Bootstrap a framework (like AngularJS or Backbone) in a single line
 3. 3kB deployment size
 2. Create reusable, configurable modules.
-3. Use modules written by structureJS community with no downloading required
+3. Use modules written by structureJS community - no downloading required
 4. View & modify the structure of your app from a single manifest file
 5. Minify and combine modules, files, or entire project into a single file using only your browser. Deploy in seconds not minutes
 5. Modules passed a `require()` function, letting you access dependencies
