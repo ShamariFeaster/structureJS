@@ -72,7 +72,6 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     if( (target && typeof target !== 'object') || (src && typeof src !== 'object'))
       throw 'Error: extend param is not an an oject';
     for(var prop in src){
-      //console.log('prop: ' + prop + ' ' + target[prop]);
       /*For cascading configs, we push to arrays instead of clobbering*/
       if(Array.isArray(target[prop]) == true && Array.isArray(src[prop]) == true){
         if(typeof unshiftArrays != 'undefined' && unshiftArrays == true ){
@@ -80,12 +79,12 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
         }else{
           target[prop] = target[prop].concat(src[prop]);
         }
-      /*enumerate object and write diffs*/
+      /*if property is object, enumerate it and add diffs or overwrite existing props*/
       }else if(typeof target[prop] === 'object' && typeof src[prop] === 'object'){
         for(var srcProp in src[prop]){
           target[prop][srcProp] = src[prop][srcProp];
         }
-      /*clobber*/  
+      /*clobber non array/object properties*/  
       }else{
         target[prop] = src[prop];
       }
@@ -96,6 +95,8 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     this.extend(this.config, configObj);
     this.extend(this.options, optionsObj);
   },
+  /*For cascading configs (like needed in bootstrapping), we unshift config
+    arrays onto existing config arrays*/
   bootstrapConfigure : function(configObj, optionsObj){
     this.extend(this.config, configObj, true);
     this.extend(this.options, optionsObj);
@@ -228,12 +229,12 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
 
       /* Configuring Framework Specific Project Files
         ---------------------------------------------
-        Use can set per-project loactions for framework-specific files by using aliases
+        User can set per-project loactions for framework-specific files by using aliases
         in bootstrap config like 'angular' which would resolve to 'angular/' in specific
         project*/
         
-        /*This runs if we user has set 'bootstrap_config' in ptoject config. This makes bootstrap config 
-       fun before our manifest*/
+        /*This runs if we user has set 'bootstrap_config' in project config. This makes bootstrap config 
+       run before our manifest*/
       var thisCallback = function(){
         /*no worries about 'directory_aliases.bootstrap' being undefined b/c this won't
           run if that's the case. This whole construct is to allow structureJS-export
@@ -242,7 +243,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
           structureJS-export*/
         bootstrapLoc = (typeof bootstrapBase == 'undefined') ? 
                             _this.config.directory_aliases.bootstrap : bootstrapBase;
-                            
+            
         _this.loadScript(bootstrapLoc + _this.config.bootstrap_config + '.js', callback);
       };
       

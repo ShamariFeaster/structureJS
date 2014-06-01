@@ -1,6 +1,15 @@
 <!DOCTYPE html>
 <html>
 <head>
+<!-- data-core-manifest overrides the core's manifest. In this case the manifest we
+    ask the core to load for itself adds the export components. The basic core 
+    manifest is empty.
+    
+    data-project-config is used b/c the core uses "config" as the default. In this
+    case the pmi project has a pecial config it needs to use. Since config is the 
+    only entry point for an configuration, I added the tag level config when the config
+    itself needs to be configured, that's so meta.
+    -->
 <script id="structureJS" 
         data-project-config="config/export-config"
         data-core-manifest="manifest/core-export-manifest"
