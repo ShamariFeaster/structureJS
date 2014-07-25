@@ -24,7 +24,7 @@ structureJS.module('structureJS-dependency',function(require){
       var needTree = null;
       
       if(typeof core[treeName] != 'undefined'){
-        needTree = core[treeName]._needTree;
+        needTree = core[treeName].state['dependencyTree'];
       }else{
         needTree = core.state['dependencyTree'];
       }
@@ -51,7 +51,7 @@ structureJS.module('structureJS-dependency',function(require){
       var retVal = 0;
       var thisDepList = null;
       var thisDepName = '';
-      var groupNeedTree = core[trgGroupName]._needTree;
+      var groupNeedTree = core[trgGroupName].state['dependencyTree'];
       
       for(var modName in groupNeedTree){
         
@@ -266,7 +266,7 @@ structureJS.module('structureJS-dependency',function(require){
 
           /*this[fileName] is group object. we put it as prop of structureJS*/
           this.printOrder('Files: ',files,3);
-          resolvedGroup = this.orderImports(core[fileName]._needTree);
+          resolvedGroup = this.orderImports(core[fileName].state['dependencyTree']);
     
           beforeInsert = files.slice(0,(i>0)? i : 0);
           this.printOrder('Before Insert: ',beforeInsert,3);
@@ -292,8 +292,8 @@ structureJS.module('structureJS-dependency',function(require){
     /**/
     resolveDependencies : function(onComplete){
       this.detectCircularDependency(core.state['dependencyTree']);
-      core._files = this.dereferenceGroups( this.orderImports(core.state['dependencyTree']) );
-      this.printOrder('Resolved Order: ', core._files);
+      core.state['resolvedFileList'] = this.dereferenceGroups( this.orderImports(core.state['dependencyTree']) );
+      this.printOrder('Resolved Order: ', core.state['resolvedFileList']);
       core.loadModules(core.config, onComplete);
     }
   

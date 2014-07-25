@@ -57,7 +57,7 @@ structureJS.module({name: 'structureJS-compress', type : 'Driver'}, function(req
         exportList[exportObj.name] = exportObj;
       }else{
 
-        orderedGroupComponents = dependency.orderImportsNoTLCChange(thisGroup._needTree);
+        orderedGroupComponents = dependency.orderImportsNoTLCChange(thisGroup.state['dependencyTree']);
 
         files = dependency.dereferenceGroups( orderedGroupComponents );
         

@@ -31,7 +31,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
   
   state : { 
     dependencyTree : {}, //_needTree
-    _files : [],
+    resolvedFileList : [],
     _exportOrder : [],
     _groupNames: [],
     _groupsRDeps : {},
@@ -49,7 +49,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
   structureJSTag : null, /*Moved to _cache*/
 
   //GENERIC ENVIRNMENT
-  _files : [],
+
   _exportOrder : [],
   _groupNames: [],
   _groupsRDeps : {},
@@ -78,7 +78,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
   },
   resetCoreState : function(){
     this.state['dependencyTree'] = {};
-    this._files = [];
+    this.state['resolvedFileList'] = [];
     this._exportOrder = [];
     this._groupNames = [];
     this._groupsRDeps = {};
@@ -179,7 +179,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     /*Wrap commons and push onto front of modules*/
     for(var i = commons.length - 1; i >= 0; i--){
       var obj = {}; obj[commons[i]] = null;
-      _this._files.unshift(obj);
+      _this.state['resolvedFileList'].unshift(obj);
     }
     /*put uglifyjs at front of globals if uglify mode*/
     if(_this.uglifyFiles != '') {
@@ -189,14 +189,14 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     /*Put globals at the front of the line.
     Have to deep copy export order because we consume
     it here. Shallow leaves us with empty exports*/
-    _this._files = globals.concat(_this._files);
-    for(var i = 0; i < _this._files.length; i++){
-      _this._exportOrder.push(_this.resolveFilePath( _this._files[i] ));
+    _this.state['resolvedFileList'] = globals.concat(_this.state['resolvedFileList']);
+    for(var i = 0; i < _this.state['resolvedFileList'].length; i++){
+      _this._exportOrder.push(_this.resolveFilePath( _this.state['resolvedFileList'][i] ));
     }
 
     //recursive callback
     var callback = function(){
-      var filePath = _this.resolveFilePath( _this._files.shift() );
+      var filePath = _this.resolveFilePath( _this.state['resolvedFileList'].shift() );
       /*Still files to load up*/
       if(filePath){
         _this.loadScript(filePath, callback);
@@ -208,8 +208,8 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
             
       }
     }
-     console.log('This Files Before Loading: ',_this._files);
-    _this.loadScript( this.resolveFilePath( _this._files.shift() ) , callback );
+     console.log('This Files Before Loading: ',_this.state['resolvedFileList']);
+    _this.loadScript( this.resolveFilePath( _this.state['resolvedFileList'].shift() ) , callback );
     
   },
   loadConfigAndManifest : function(onLoaded, bootstrapBase){
@@ -356,6 +356,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     /*Add error checking here for name*/
     if(typeof dependencies == 'undefined')
       dependencies = [];
+
     this.state['dependencyTree'][name] = dependencies;
     
   },
@@ -366,7 +367,8 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     this.declare(infoObj.name);
     this[infoObj.name] = {};
     var groupNamespace = this[infoObj.name];//make structureJS.<group name> to declare files on
-    groupNamespace['_needTree'] = {};
+    groupNamespace.state = { dependencyTree : {}};
+
     /*Copying functions TODO: do this prototypically*/
     groupNamespace.declare = function(name, dependencies){
       /*uses declare to put dependeny tree together on <group name>._needTree

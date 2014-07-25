@@ -14,8 +14,8 @@ structureJS.module('structureJS-export',function(require){
     },
     
     resetState : function(){
-      core._needTree = {};
-      core._files = [];
+      core.state['dependencyTree'] = {};
+      core.state['resolvedFileList'] = [];
       core._exportOrder = [];
       core._groupNames = [];
       core._groupsRDeps = {};
@@ -45,15 +45,15 @@ structureJS.module('structureJS-export',function(require){
       /*Wrap commons and push onto front of modules*/
       for(var i = commons.length - 1; i >= 0; i--){
         var obj = {}; obj[commons[i]] = null;
-        core._files.unshift(obj);
+        core.state['resolvedFileList'].unshift(obj);
       }
       
       /*Put globals at the front of the line.
       Have to deep copy export order because we consume
       it here. Shallow leaves us with empty exports*/
-      core._files = globals.concat(core._files);
-      for(var i = 0; i < core._files.length; i++){
-        core._exportOrder.push(core.resolveFilePath( core._files[i] ));
+      core.state['resolvedFileList'] = globals.concat(core.state['resolvedFileList']);
+      for(var i = 0; i < core.state['resolvedFileList'].length; i++){
+        core._exportOrder.push(core.resolveFilePath( core.state['resolvedFileList'][i] ));
       }
       
       console.log('Export Order: ' + core._exportOrder);
@@ -71,9 +71,9 @@ structureJS.module('structureJS-export',function(require){
     /*For export we need to order imports, dereference group names, insert common/globals
       then (if necessary) load drivers  */
     resolveDependencies : function(){
-      dependency.detectCircularDependency(core._needTree);
-      core._files = dependency.dereferenceGroups( dependency.orderImports(core._needTree) );
-      dependency.printOrder('Resolved Order: ', core._files, 3);
+      dependency.detectCircularDependency(core.state['dependencyTree']);
+      core.state['resolvedFileList'] = dependency.dereferenceGroups( dependency.orderImports(core.state['dependencyTree']) );
+      dependency.printOrder('Resolved Order: ', core.state['resolvedFileList'], 3);
     },
     
     /*Executed on pmi right before loading of export manifest.
