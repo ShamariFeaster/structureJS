@@ -21,17 +21,34 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     globals : [],
     commons : []
     },
+  
+  flags : {
     uglifyMode : false,
     compressedMode : false,
     hasRemotes : false,
-    exportFiles : '',
-    uglifyFiles : '',
     exportInitiated : false,
-    executeExport : null,
-    structureJSTag : null,
+  },
+  
+  state : { 
+    dependencyTree : {}, //_needTree
+    _files : [],
+    _exportOrder : [],
+    _groupNames: [],
+    _groupsRDeps : {},
+    uglifyFiles : ''
+  },
+  
+  uglifyMode : false,
+  compressedMode : false,
+  hasRemotes : false,
+  exportFiles : '', /*Unused*/
+  uglifyFiles : '', /*Moved to state*/
+  exportInitiated : false,
+
+  executeExport : null, /*Can Remove*/
+  structureJSTag : null, /*Moved to _cache*/
 
   //GENERIC ENVIRNMENT
-  _needTree : {},
   _files : [],
   _exportOrder : [],
   _groupNames: [],
@@ -45,7 +62,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
   /*@EndDeploymentRemove*/
   
   _modules : {},
-  _cache : {},
+  _cache : { structureJSTag : null },
   
   /*@StartDeploymentRemove*/
   loadScript : function(url, callback, id){
@@ -60,7 +77,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     script.onload = callback;
   },
   resetCoreState : function(){
-    this._needTree = {};
+    this.state['dependencyTree'] = {};
     this._files = [];
     this._exportOrder = [];
     this._groupNames = [];
@@ -339,7 +356,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     /*Add error checking here for name*/
     if(typeof dependencies == 'undefined')
       dependencies = [];
-    this._needTree[name] = dependencies;
+    this.state['dependencyTree'][name] = dependencies;
     
   },
   declareGroup : function(groupInfo){
@@ -386,23 +403,23 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
   
   
   /*@StartDeploymentRemove*/
-  structureJS.structureJSTag = document.getElementById('structureJS');//returns null if not found
+  structureJS.cache('structureJSTag', document.getElementById('structureJS'));//returns null if not found
   
   /*In a compressed project we should not use the structureJS id. Not using it will
     mean all file loading is not done and all structreJS provide is module loading*/
   
-  if(structureJS.structureJSTag != null){
+  if(structureJS.cache('structureJSTag') != null){
     /*Init*/
     var core = structureJS;
     var core_resolve = null;
     /*master file base pulled from src tag*/
-    core.config.core_base = /((.+)+\/)structureJS-core.js$/.exec( core.structureJSTag.getAttribute('src') )[1];
+    core.config.core_base = /((.+)+\/)structureJS-core.js$/.exec( core.cache('structureJSTag').getAttribute('src') )[1];
 
 
     /*For core build p-base is same because resolveFilePath uses p-base*/
     core.config.project_base = core.config.core_base;
     /*use attrivs where you need config before config is loaded (ie. pmi)*/
-    core.config.manifest_name = structureJS.structureJSTag.getAttribute('data-core-manifest') || core.config.manifest_name;
+    core.config.manifest_name = structureJS.cache('structureJSTag').getAttribute('data-core-manifest') || core.config.manifest_name;
     /*Load project config and manifest*/
     core.loadConfigAndManifest(function(){
       
@@ -429,16 +446,16 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
           core.resetCoreState();
           
           /*User may override default config name 'config' in script tag. Defaults to 'config'*/
-          core.config.config_name = structureJS.structureJSTag.getAttribute('data-project-config') || 'config';
-          core.config.manifest_name = structureJS.structureJSTag.getAttribute('data-project-manifest') || 'manifest';
+          core.config.config_name = structureJS.cache('structureJSTag').getAttribute('data-project-config') || 'config';
+          core.config.manifest_name = structureJS.cache('structureJSTag').getAttribute('data-project-manifest') || 'manifest';
           
           /*Project base is location of project config/manifest used to override 
           core build dir structure. Defaults to './' */
-          core.config.project_base = core.structureJSTag.getAttribute('data-project-base') || './';
+          core.config.project_base = core.cache('structureJSTag').getAttribute('data-project-base') || './';
           
           /*If use sets these two in tag we bootstrap whatever framework they point to*/
-          core.config.bootstrap_base = structureJS.structureJSTag.getAttribute('data-bootstrap-base') || null;
-          core.config.bootstrap_config = structureJS.structureJSTag.getAttribute('data-bootstrap-config') || null;
+          core.config.bootstrap_base = structureJS.cache('structureJSTag').getAttribute('data-bootstrap-base') || null;
+          core.config.bootstrap_config = structureJS.cache('structureJSTag').getAttribute('data-bootstrap-config') || null;
           
           /*Explicitly load project manifest & config files, then resolve deps*/
           core.loadConfigAndManifest(function(){

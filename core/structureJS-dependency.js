@@ -26,7 +26,7 @@ structureJS.module('structureJS-dependency',function(require){
       if(typeof core[treeName] != 'undefined'){
         needTree = core[treeName]._needTree;
       }else{
-        needTree = core._needTree;
+        needTree = core.state['dependencyTree'];
       }
       /*tc - tree component*/
       for(var tc in needTree){//for Group Component (GC)
@@ -291,8 +291,8 @@ structureJS.module('structureJS-dependency',function(require){
     },
     /**/
     resolveDependencies : function(onComplete){
-      this.detectCircularDependency(core._needTree);
-      core._files = this.dereferenceGroups( this.orderImports(core._needTree) );
+      this.detectCircularDependency(core.state['dependencyTree']);
+      core._files = this.dereferenceGroups( this.orderImports(core.state['dependencyTree']) );
       this.printOrder('Resolved Order: ', core._files);
       core.loadModules(core.config, onComplete);
     }
