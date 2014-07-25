@@ -16,7 +16,7 @@ structureJS.module('structureJS-export',function(require){
     resetState : function(){
       core.state['dependencyTree'] = {};
       core.state['resolvedFileList'] = [];
-      core._exportOrder = [];
+      core.state['pmiFileOrder'] = [];
       core._groupNames = [];
       core._groupsRDeps = {};
     },
@@ -53,10 +53,10 @@ structureJS.module('structureJS-export',function(require){
       it here. Shallow leaves us with empty exports*/
       core.state['resolvedFileList'] = globals.concat(core.state['resolvedFileList']);
       for(var i = 0; i < core.state['resolvedFileList'].length; i++){
-        core._exportOrder.push(core.resolveFilePath( core.state['resolvedFileList'][i] ));
+        core.state['pmiFileOrder'].push(core.resolveFilePath( core.state['resolvedFileList'][i] ));
       }
       
-      console.log('Export Order: ' + core._exportOrder);
+      console.log('Export Order: ' + core.state['pmiFileOrder']);
     },
     
     /*This loads up drivers for exportation.*/

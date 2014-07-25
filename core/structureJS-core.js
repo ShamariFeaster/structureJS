@@ -32,7 +32,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
   state : { 
     dependencyTree : {}, //_needTree
     resolvedFileList : [],
-    _exportOrder : [],
+    pmiFileOrder : [],
     _groupNames: [],
     _groupsRDeps : {},
     uglifyFiles : ''
@@ -79,7 +79,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
   resetCoreState : function(){
     this.state['dependencyTree'] = {};
     this.state['resolvedFileList'] = [];
-    this._exportOrder = [];
+    this.state['pmiFileOrder'] = [];
     this._groupNames = [];
     this._groupsRDeps = {};
     this.config.globals.length = 0;
@@ -191,7 +191,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     it here. Shallow leaves us with empty exports*/
     _this.state['resolvedFileList'] = globals.concat(_this.state['resolvedFileList']);
     for(var i = 0; i < _this.state['resolvedFileList'].length; i++){
-      _this._exportOrder.push(_this.resolveFilePath( _this.state['resolvedFileList'][i] ));
+      _this.state['pmiFileOrder'].push(_this.resolveFilePath( _this.state['resolvedFileList'][i] ));
     }
 
     //recursive callback

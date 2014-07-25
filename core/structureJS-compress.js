@@ -6,7 +6,7 @@ structureJS.module({name: 'structureJS-compress', type : 'Driver'}, function(req
   var projectBase = core.config.project_base;
   var globalBase = core.config.global_base;
   var exports = null;
-  var wholeProject = core._exportOrder;
+  var wholeProject = core.state['pmiFileOrder'];
   var indexes = {};
   var exportList = {};
   var thisGroup = null;
@@ -33,7 +33,7 @@ structureJS.module({name: 'structureJS-compress', type : 'Driver'}, function(req
   
   function parseFileList(){
     exports = core.uglifyFiles.split(',');
-    wholeProject = core._exportOrder;
+    wholeProject = core.state['pmiFileOrder'];
     projectBase = core.config.project_base;
     globalBase = core.config.global_base;
     var files = [];
