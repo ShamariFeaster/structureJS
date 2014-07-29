@@ -17,7 +17,7 @@ structureJS.module('structureJS-export',function(require){
       core.state['dependencyTree'] = {};
       core.state['resolvedFileList'] = [];
       core.state['pmiFileOrder'] = [];
-      core._groupNames = [];
+      core.state['declaredGroups'] = [];
       core._groupsRDeps = {};
     },
     

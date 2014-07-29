@@ -33,7 +33,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     dependencyTree : {}, //_needTree
     resolvedFileList : [],
     pmiFileOrder : [],
-    _groupNames: [],
+    declaredGroups: [],
     _groupsRDeps : {},
     uglifyFiles : ''
   },
@@ -50,7 +50,6 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
 
   //GENERIC ENVIRNMENT
 
-  _exportOrder : [],
   _groupNames: [],
   _groupsRDeps : {},
   //Constants
@@ -80,7 +79,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     this.state['dependencyTree'] = {};
     this.state['resolvedFileList'] = [];
     this.state['pmiFileOrder'] = [];
-    this._groupNames = [];
+    this.state['declaredGroups'] = [];
     this._groupsRDeps = {};
     this.config.globals.length = 0;
     this.config.commons.length = 0;
@@ -363,11 +362,11 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
   declareGroup : function(groupInfo){
     var _this = this;
     var infoObj = this.decodeInfoObj(groupInfo);
-    this._groupNames.push(infoObj.name);
+    this.state['declaredGroups'].push(infoObj.name);
     this.declare(infoObj.name);
     this[infoObj.name] = {};
     var groupNamespace = this[infoObj.name];//make structureJS.<group name> to declare files on
-    groupNamespace.state = { dependencyTree : {}};
+    groupNamespace.state = { dependencyTree : {}, declaredGroups : []};
 
     /*Copying functions TODO: do this prototypically*/
     groupNamespace.declare = function(name, dependencies){

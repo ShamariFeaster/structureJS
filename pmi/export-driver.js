@@ -16,7 +16,7 @@
   
   function constructTargetChkBx(_member, _core){
     _member.projectFiles = _core.state['pmiFileOrder'];
-    _member.projectGroups = _core._groupNames;
+    _member.projectGroups = _core.state['declaredGroups'];
     /*files are declared file/groups of loaded project*/
     var files = _member.projectFiles.concat(_member.projectGroups);
     var row = null, label = null, nameTd = null, addTd = null, compressTd = null,

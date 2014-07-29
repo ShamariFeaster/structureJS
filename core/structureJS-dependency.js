@@ -39,12 +39,12 @@ structureJS.module('structureJS-dependency',function(require){
     /*When given a group name, we get that group's needTree*/
     detectGroupCircularDependency : function(trgGroupName, circularName ){
       /*Short circuit if this isn't group*/
-      if(core._groupNames.indexOf(trgGroupName) == -1)
+      if(core.state['declaredGroups'].indexOf(trgGroupName) == -1)
         return 0;
        
       /*Check if declared groups are dependencies. If they aren't then I need to
         remove them from TLC. Removal happens in orderImports()*/ 
-      if(core._groupNames.indexOf(trgGroupName) > -1)
+      if(core.state['declaredGroups'].indexOf(trgGroupName) > -1)
         core._groupsRDeps[trgGroupName] = 1;
         
       var circularName = (typeof circularName == 'undefined')? '' : circularName;
@@ -74,7 +74,7 @@ structureJS.module('structureJS-dependency',function(require){
           /*if GCD is group, we go down into that group deps and try to find refernce to ourself.
             If at any point down that rabit hole we encounter this situ, that false will propagate
             back up to us and make it impossible for this function to return a false value*/
-          if(core._groupNames.indexOf(thisDepName) > -1)
+          if(core.state['declaredGroups'].indexOf(thisDepName) > -1)
             retVal = retVal | this.detectGroupCircularDependency(thisDepName, trgGroupName);
         }
       }
@@ -136,7 +136,7 @@ structureJS.module('structureJS-dependency',function(require){
         if flag is present then we skip this. HORRIBLE but this function is horrible
         and breaking it up at this stage is not going to happen*/
         
-        if(core._groupNames.indexOf(fileName) > -1 && typeof skipCleanTLC == 'undefined'){
+        if(core.state['declaredGroups'].indexOf(fileName) > -1 && typeof skipCleanTLC == 'undefined'){
           for(var groupName in groupsRDeps){
             if(fileName == groupName)
               modules.push( modObj );
@@ -251,7 +251,7 @@ structureJS.module('structureJS-dependency',function(require){
         fileName = this.getFilename(files[i]);
         
         /*We found a reference to a soft group in top-level chain (TLC)*/
-        if( core._groupNames.indexOf(fileName) > -1) {
+        if( core.state['declaredGroups'].indexOf(fileName) > -1) {
 
           /*Remove Group Refs*/
           for(var i2 = 0; i2 < files.length; i2++){
