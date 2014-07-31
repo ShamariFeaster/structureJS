@@ -245,7 +245,7 @@ function(require){
     parseFileList();
     /*Driver*/
     if(exportProject == true){
-      if(core.hasRemotes == false)
+      if(core.flags['hasRemotes'] == false)
         combineProjectSrcFiles( core.config.core_base +core.NAME+'.js' );
       else{
         throw 'Error: Cannot minify because you are using remote files in the project'; 

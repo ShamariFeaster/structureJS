@@ -122,10 +122,10 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
       /*Before returning replace 'remote' with remote URL*/
       if(new RegExp(remoteRegex).test(input)){
         results = input.replace(remoteRegex, _this.REMOTE_URL) + '.js';
-        _this.hasRemotes = true;
+        _this.flags['hasRemotes'] = true;
       }else if(cdnRegex.test(input)){
         results = input + '.js';
-        _this.hasRemotes = true;
+        _this.flags['hasRemotes'] = true;
       }else{
         results = defaultBase + input + '.js';
       }
