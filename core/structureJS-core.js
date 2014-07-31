@@ -35,10 +35,6 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     groupsInTLC : {},
     pmiFilesSelectedForExport : ''/*TODO: for consistency, change to array*/
   },
-  
-  hasRemotes : false,
-  exportInitiated : false,
-
 
   //Constants
   NAME : 'structureJS-core',

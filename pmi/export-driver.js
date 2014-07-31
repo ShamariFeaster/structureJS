@@ -251,7 +251,7 @@
       setLastOpened(exportData.base_dir);
     }
 
-    if(_core.exportInitiated == false){
+    if(_core.flags['exportInitiated'] == false){
 
       _export.init(exportData, function(errorMsg){
         if(errorMsg != null){

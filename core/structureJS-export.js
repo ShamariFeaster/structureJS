@@ -110,7 +110,7 @@ function(require){
             _this.resolveDependencies();
             _this.constructExportOrder();
             _this.loadDrivers();
-            core.exportInitiated = true;
+            core.flags['exportInitiated'] = true;
           }catch(e){
             //Propagate error from detectCircularDependency()
             bubbleError = e;
