@@ -1,4 +1,12 @@
-structureJS.module('structureJS-export',function(require){
+structureJS.module(
+{
+name : 'structureJS-export',
+description : 'This is the bridge between pmi/export-driver and core/structureJS-compress.'
+            + 'This loads data from the pmi form into the core that is then ' 
+            + 'procressed by core/structureJS-compress.'            
+},
+
+function(require){
   var core = require('core');
   var dependency = require('structureJS-dependency');
   var _compress = require('structureJS-compress');
@@ -80,7 +88,7 @@ structureJS.module('structureJS-export',function(require){
     Brings data from pmi into this context*/
     loadData : function(exportDataObj){
       /*Get the data from the pmi*/
-      core.uglifyFiles = exportDataObj.files;
+      core.state['pmiFilesSelectedForExport'] = exportDataObj.files;
       core.config.project_base = exportDataObj.base_dir;
       core.config.manifest_loc = core.config.project_base + exportDataObj.manifest_loc;
       core.config.manifest_name = exportDataObj.manifest_name;
@@ -115,8 +123,9 @@ structureJS.module('structureJS-export',function(require){
       });
     },
     
-    /*structureJS-compress looks at _exportOrder if its a whole project export
-      and _uglifyFiles if it's a file by file select*/
+    /*structureJS-compress looks at core.state['pmiFilesSelectedForExport'] 
+      if its a whole project export and core.state['pmiFilesSelectedForExport'] 
+      if it's a file by file select*/
     update : function(exportData, callback){
       console.log('UPDATE');
       var _this = this;

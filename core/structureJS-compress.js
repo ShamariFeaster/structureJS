@@ -1,4 +1,10 @@
-structureJS.module({name: 'structureJS-compress', type : 'Driver'}, function(require){
+structureJS.module(
+{
+name: 'structureJS-compress', 
+type : 'Driver'
+}, 
+
+function(require){
   var core = require('core');
   var dependency = require('structureJS-dependency');
   
@@ -32,7 +38,7 @@ structureJS.module({name: 'structureJS-compress', type : 'Driver'}, function(req
   }
   
   function parseFileList(){
-    exports = core.uglifyFiles.split(',');
+    exports = core.state['pmiFilesSelectedForExport'].split(',');
     wholeProject = core.state['pmiFileOrder'];
     projectBase = core.config.project_base;
     globalBase = core.config.global_base;

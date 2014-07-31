@@ -35,23 +35,15 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     pmiFileOrder : [],
     declaredGroups: [],
     groupsInTLC : {},
-    uglifyFiles : ''
+    pmiFilesSelectedForExport : ''/*TODO: for consistency, change to array*/
   },
   
   uglifyMode : false,
   compressedMode : false,
   hasRemotes : false,
-  exportFiles : '', /*Unused*/
-  uglifyFiles : '', /*Moved to state*/
   exportInitiated : false,
 
-  executeExport : null, /*Can Remove*/
-  structureJSTag : null, /*Moved to _cache*/
 
-  //GENERIC ENVIRNMENT
-
-  _groupNames: [],
-  _groupsRDeps : {},
   //Constants
   NAME : 'structureJS-core',
   UGLYFY_FILENAME : 'uglifyjs.min',
@@ -181,7 +173,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
       _this.state['resolvedFileList'].unshift(obj);
     }
     /*put uglifyjs at front of globals if uglify mode*/
-    if(_this.uglifyFiles != '') {
+    if(_this.state['pmiFilesSelectedForExport'] != '') {
       globals.unshift('uglifyjs.min');
     }
     
