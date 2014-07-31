@@ -23,7 +23,6 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     },
   
   flags : {
-    uglifyMode : false,
     compressedMode : false,
     hasRemotes : false,
     exportInitiated : false,
@@ -38,7 +37,6 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     pmiFilesSelectedForExport : ''/*TODO: for consistency, change to array*/
   },
   
-  uglifyMode : false,
   compressedMode : false,
   hasRemotes : false,
   exportInitiated : false,
