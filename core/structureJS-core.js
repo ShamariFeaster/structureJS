@@ -34,7 +34,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     resolvedFileList : [],
     pmiFileOrder : [],
     declaredGroups: [],
-    _groupsRDeps : {},
+    groupsInTLC : {},
     uglifyFiles : ''
   },
   
@@ -80,7 +80,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     this.state['resolvedFileList'] = [];
     this.state['pmiFileOrder'] = [];
     this.state['declaredGroups'] = [];
-    this._groupsRDeps = {};
+    this.state['groupsInTLC'] = {};
     this.config.globals.length = 0;
     this.config.commons.length = 0;
   },
@@ -370,7 +370,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
 
     /*Copying functions TODO: do this prototypically*/
     groupNamespace.declare = function(name, dependencies){
-      /*uses declare to put dependeny tree together on <group name>._needTree
+      /*uses declare to put dependeny tree together on <group name>.dependencyTree
       we would resolve this separately to construct hard group*/
       _this.declare.apply(groupNamespace, [name, dependencies]);
       /*I don't want to add to TLC because unless user puts group in TLC*/

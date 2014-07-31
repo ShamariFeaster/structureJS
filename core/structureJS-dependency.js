@@ -45,7 +45,7 @@ structureJS.module('structureJS-dependency',function(require){
       /*Check if declared groups are dependencies. If they aren't then I need to
         remove them from TLC. Removal happens in orderImports()*/ 
       if(core.state['declaredGroups'].indexOf(trgGroupName) > -1)
-        core._groupsRDeps[trgGroupName] = 1;
+        core.state['groupsInTLC'][trgGroupName] = 1;
         
       var circularName = (typeof circularName == 'undefined')? '' : circularName;
       var retVal = 0;
@@ -123,7 +123,7 @@ structureJS.module('structureJS-dependency',function(require){
       /*TODO: Check groups for circulars. Cycle through group names and run
       detectCircularDependency on their needTrees*/
       var _this = this;
-      var groupsRDeps = core._groupsRDeps;
+      var groupsRDeps = core.state['groupsInTLC'];
       var modules = [];
       
       //convert needTree to array for easier processing

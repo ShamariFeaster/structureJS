@@ -18,7 +18,7 @@ structureJS.module('structureJS-export',function(require){
       core.state['resolvedFileList'] = [];
       core.state['pmiFileOrder'] = [];
       core.state['declaredGroups'] = [];
-      core._groupsRDeps = {};
+      core.state['groupsInTLC'] = {};
     },
     
     removeProjectManifest : function(){
