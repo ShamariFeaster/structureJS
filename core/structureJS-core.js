@@ -34,7 +34,8 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     declaredGroups: [],
     groupsInTLC : {},
     pmiFilesSelectedForExport : '',    /*TODO: for consistency, change to array*/
-    modules : {} 
+    modules : {},
+    cache : { structureJSTag : null } 
   },
 
   //Constants
@@ -44,8 +45,6 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
   REMOTE_KEYWORD : 'remote',
   REMOTE_URL : 'https://deeperhistory.info/structureJS/wordpress/wp-content/Modules/',
   /*@EndDeploymentRemove*/
-
-  _cache : { structureJSTag : null },
   
   /*@StartDeploymentRemove*/
   loadScript : function(url, callback, id){
@@ -363,10 +362,10 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
   },
   cache : function(key, value){
     var returnVal = null;
-    if(arguments.length == 1 && this._cache[key])
-      returnVal = this._cache[key];
+    if(arguments.length == 1 && this.state['cache'][key])
+      returnVal = this.state['cache'][key];
     if(arguments.length == 2 && key && value)  
-      this._cache[key] = value
+      this.state['cache'][key] = value
     return returnVal;
   },
 };
