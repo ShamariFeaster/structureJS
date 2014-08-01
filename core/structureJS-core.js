@@ -28,12 +28,13 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
   },
   
   state : { 
-    dependencyTree : {}, //_needTree
+    dependencyTree : {}, 
     resolvedFileList : [],
     pmiFileOrder : [],
     declaredGroups: [],
     groupsInTLC : {},
-    pmiFilesSelectedForExport : ''/*TODO: for consistency, change to array*/
+    pmiFilesSelectedForExport : '',    /*TODO: for consistency, change to array*/
+    modules : {} 
   },
 
   //Constants
@@ -43,8 +44,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
   REMOTE_KEYWORD : 'remote',
   REMOTE_URL : 'https://deeperhistory.info/structureJS/wordpress/wp-content/Modules/',
   /*@EndDeploymentRemove*/
-  
-  _modules : {},
+
   _cache : { structureJSTag : null },
   
   /*@StartDeploymentRemove*/
@@ -300,16 +300,16 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     }
     function require(depName){
       var retVal = null;
-      if( _this._modules[depName] )
-        retVal = _this._modules[depName]['module'];
+      if( _this.state['modules'][depName] )
+        retVal = _this.state['modules'][depName]['module'];
       return retVal;
     };
     /*aliases that let user's add semantic meaning to thier require calls*/
     require.amd = require;
     require.getType = function(modName){
       var retVal = null;
-      if( _this._modules[depName] )
-        retVal = _this._modules[depName]['type'];
+      if( _this.state['modules'][depName] )
+        retVal = _this.state['modules'][depName]['type'];
       return retVal;
     }
     require._class = require;
@@ -322,7 +322,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     if(typeof moduleWrapper['module'] == 'undefined')
       throw infoObj.name + ' FAILED: Module Function Definition Must Return Something';
     
-    this._modules[infoObj.name] = moduleWrapper;
+    this.state['modules'][infoObj.name] = moduleWrapper;
   },
   
   /*I split this up because I want the module importation via require to be transparent
@@ -333,7 +333,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     if(typeof moduleWrapper['module'] == 'undefined')
       throw 'Module Function Definition Must Return Something';
     //this.pLog(2,'AMD: Loading ' + modName);
-    this._modules[modName] = moduleWrapper;
+    this.state['modules'][modName] = moduleWrapper;
   },
   declare : function(name, dependencies){
     /*Add error checking here for name*/
