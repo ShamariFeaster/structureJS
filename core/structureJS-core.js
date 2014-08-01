@@ -1,5 +1,8 @@
 var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
-
+  /*
+  @property options
+  @type Object
+  */
   options : {
     download_minified : false,
     minified_output_tag_id : 'minified',
@@ -8,7 +11,11 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
   
   /*@StartDeploymentRemove*/
   /*module_base is removed. let directory_aliases stand in its place. this is more
-    flexible for users. NOTE: ./ and ../ can be stacked ir, ./../. resolves correctly*/
+    flexible for users. NOTE: ./ and ../ can be stacked ie, ./../. resolves correctly*/
+  /*
+  @property config
+  @type Object
+  */
   config : {
     core_base : '',/*This is pulled from the src attribute pointing to this script*/
     core_lib_folder : 'lib/',
@@ -21,13 +28,19 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     globals : [],
     commons : []
     },
-  
+  /*
+  @property flags
+  @type Object
+  */
   flags : {
     hasRemotes : false,
     exportInitiated : false,
   },
-  
-  state : { 
+  /*
+  @property state
+  @type Object
+  */
+  state : {
     dependencyTree : {}, 
     resolvedFileList : [],
     pmiFileOrder : [],
@@ -47,8 +60,24 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
   /*@EndDeploymentRemove*/
   
   /*@StartDeploymentRemove*/
+  /*
+  Adds a new script element to HTML document this script is running on
+  
+  @method loadScript
+  @module core
+  @async
+  
+  @param {String} url
+    Location of the script you want to load, relative to this script
+  @param {Function} callback 
+    Executes when newly created <Script> tag's onload function is called
+  @param {String} id
+    Sets the newly created <script> element's id property
+    
+  @return void
+  */
   loadScript : function(url, callback, id){
-    //this.pLog(1,'Loading: ' + url);
+
     var head = document.getElementsByTagName('head')[0];
     var script = document.createElement('script');
     script.type = 'text/javascript';
@@ -58,6 +87,15 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     head.appendChild(script);
     script.onload = callback;
   },
+  /*
+    Reset all proerties of core.state to default values as
+    well as core.config.globals and core.config.commons arrays
+  
+    @method resetCoreState
+    @module core
+    
+    @return void
+  */
   resetCoreState : function(){
     this.state['dependencyTree'] = {};
     this.state['resolvedFileList'] = [];
@@ -67,6 +105,19 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     this.config.globals.length = 0;
     this.config.commons.length = 0;
   },
+  /*
+  @method extend
+  @module core
+  @param {Object} target 
+    Object to copy or clobber new properties to
+  @param {Object} source 
+    Object to copy or clobber new properties from
+  @param {Boolean} unshiftArray
+    if extend finds properties which have arrays as values
+      true - put source's array at the front of target's
+      false/undefined - put source's array at the end of target's
+  @return void
+  */
   extend : function(target, src, unshiftArrays){
     if( (target && typeof target !== 'object') || (src && typeof src !== 'object'))
       throw 'Error: extend param is not an an oject';
@@ -90,66 +141,120 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
       
     }
   },
+  /*
+  @method configure
+  @module core
+  @param {Object} configObj 
+    core.config is extended by this object using {{#crossLinkModule "core:extend"}}{{/crossLinkModule}}
+  @param {Object} optionsObj 
+    core.options is extended by this object using {{#crossLinkModule "core:extend"}}{{/crossLinkModule}}
+  
+  @return void
+  */
   configure : function(configObj, optionsObj){
     this.extend(this.config, configObj);
     this.extend(this.options, optionsObj);
   },
-  /*For cascading configs (like needed in bootstrapping), we unshift config
-    arrays onto existing config arrays*/
+  /*
+  Differs from {{#crossLinkModule "core:configure"}}{{/crossLinkModule}} because it puts any arrays
+  in configObj at the front of core.config's versions. This is useful in bootstrapping as the bootstrapee's
+  config is loaded after the bootstrapper's (ie, the project), yet we need the bootstrapee's globals or commons
+  to be loaded beofre our bootstrappee's.
+  
+  @method bootstrapConfigure
+  @module core
+  @param {Object} configObj 
+    core.config is extended by this object using {{#crossLinkModule "core:extend"}}{{/crossLinkModule}}
+  @param {Object} optionsObj 
+    core.options is extended by this object using {{#crossLinkModule "core:extend"}}{{/crossLinkModule}}
+  
+  @return void
+  */
   bootstrapConfigure : function(configObj, optionsObj){
     this.extend(this.config, configObj, true);
     this.extend(this.options, optionsObj);
   },
+  /*
+  Transforms a relative file path by recognizing declared aliases and replacing the
+  aliases with their declared values.
+  
+  By using defaultBase, user can prepend a path base to file path. This is useful when
+  user knows certain files share a base path (say lib/ for example)
+  
+  Function also checks to see if file path if URL is an absolute remote path (ie, starts with http://). 
+  If so, if sets core.flags['hasRemotes'] which has side effects of project exportation using
+  PMI.
+  
+  @method resolveDirectoryAliases
+  @module core
+  @param {String} input 
+    relative file path
+  @param {String} defaultBase 
+    path to prepend to input
+  @event throws RemotePathFoundError
+  @return {String} a transformed file path
+  */
+  resolveDirectoryAliases : function(input, defaultBase){
+    var aliases = this.config.directory_aliases;
+    var results = '';
+    var remoteRegex = new RegExp('^' +this.REMOTE_KEYWORD + '\/', 'i');
+    var cdnRegex = /^(http|\/\/)/; /*FIX: we don't check for https*/
+
+    /*Before returning replace 'remote' with remote URL*/
+    if(new RegExp(remoteRegex).test(input)){
+      results = input.replace(remoteRegex, this.REMOTE_URL) + '.js';
+      this.flags['hasRemotes'] = true;
+    }else if(cdnRegex.test(input)){
+      results = input + '.js';
+      this.flags['hasRemotes'] = true;
+    }else{
+      /*FIX: we never check that defaultBase is defined. We could end up with
+            'undefined' in the path*/
+      results = defaultBase + input + '.js';
+    }
+      
+    var matchResult = null;  
+    var regex = null;
+    for(var alias in aliases){
+      //checkl for reserved 'remote' alias
+      if(new RegExp(this.REMOTE_KEYWORD, 'i').test(alias))
+        throw 'Alias "remote" is reserved. Please rename';
+      
+      regex = new RegExp('^' + alias + '\/', 'i');
+      matchResult = regex.exec(input);
+      
+      if(matchResult != null){
+        results = input.replace(matchResult[0], aliases[alias]) + '.js';
+      }
+    }
+    return results;
+  },
+  /*
+
+  Deciphers different input types and extracts the file paths from them.
+  Also recognizes if file is UglifyJS and constructs proper defaultBase
+  
+  @method resolveFilePath
+  @module core
+  @param {String|Object} input 
+    relative file path. 
+    if input is
+      Object - Use the input->key as file path
+      String - use input as file path
+  @return {String} a transformed file path
+  */
   resolveFilePath : function(input){
-    var _this = this;
-    var remoteRegex = new RegExp('^' +_this.REMOTE_KEYWORD + '\/', 'i');
-    var cdnRegex = /^(http|\/\/)/;
     if(typeof input == 'undefined')
       return '';
     var config = this.config;
     
-    /*NOTE: inside inner functions this refers to window*/
-    function resolveDirectoryAliases(input, defaultBase){
-      var aliases = config.directory_aliases;
-      var results = '';
-      //console.log(input + ' is CDN: ' +cdnRegex.test(input));
-      //console.log(config.directory_aliases);
-      /*Before returning replace 'remote' with remote URL*/
-      if(new RegExp(remoteRegex).test(input)){
-        results = input.replace(remoteRegex, _this.REMOTE_URL) + '.js';
-        _this.flags['hasRemotes'] = true;
-      }else if(cdnRegex.test(input)){
-        results = input + '.js';
-        _this.flags['hasRemotes'] = true;
-      }else{
-        results = defaultBase + input + '.js';
-      }
-        
-      var matchResult = null;  
-      var regex = null;
-      for(var alias in aliases){
-        //checkl for reserved 'remote' alias
-        if(new RegExp(_this.REMOTE_KEYWORD, 'i').test(alias))
-          throw 'Alias "remote" is reserved. Please rename';
-        
-        regex = new RegExp('^' + alias + '\/', 'i');
-        matchResult = regex.exec(input);
-        
-        if(matchResult != null){
-          results = input.replace(matchResult[0], aliases[alias]) + '.js';
-        }
-      }
-      return results;
-    }
-    /*End resolve*/
-    
     var filePath = '';
     if( input && typeof input === 'object' ){
-      filePath = resolveDirectoryAliases(Object.keys(input)[0], config.project_base);//config.module_base + Object.keys(input)[0] + '.js';
+      filePath = this.resolveDirectoryAliases(Object.keys(input)[0], config.project_base);//config.module_base + Object.keys(input)[0] + '.js';
     }else if(input == this.UGLYFY_FILENAME){
-     filePath = resolveDirectoryAliases(input, config.core_base + config.core_lib_folder);//config.core_base + input + '.js';
+     filePath = this.resolveDirectoryAliases(input, config.core_base + config.core_lib_folder);//config.core_base + input + '.js';
     }else if(typeof input === 'string'){
-      filePath = resolveDirectoryAliases(input, config.project_base )//config.global_base + input + '.js';
+      filePath = this.resolveDirectoryAliases(input, config.project_base )//config.global_base + input + '.js';
     }
     return filePath;
   },
