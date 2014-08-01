@@ -450,7 +450,9 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
         });/*End Core Resolve Block*/
       });
     });
-  }else{throw 'ERROR: he id attribute of the <script> tag is not set to "structureJS".';}
+  }else if(typeof window.structureJSUnitTestInProgress == 'undefined'){
+    throw 'ERROR: he id attribute of the <script> tag is not set to "structureJS".';
+    }
   /*@EndDeploymentRemove*/
   
 })();
