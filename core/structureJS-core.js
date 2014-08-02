@@ -260,6 +260,17 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     }
     return filePath;
   },
+  /*
+  
+  @method loadModules
+  @module core
+  @param {Object} config 
+    a config object 
+  @param {Function} onComplete
+    callback executed when all file and/or modules are loaded
+  @return void
+  */
+  /*FIX: config arg is not being used. we use core.config regardless*/
   loadModules : function(config, onComplete){
     var _this = this;
     var globals = _this.config.globals || [];
@@ -272,7 +283,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     }
     /*put uglifyjs at front of globals if uglify mode*/
     if(_this.state['pmiFilesSelectedForExport'] != '') {
-      globals.unshift('uglifyjs.min');
+      globals.unshift(_this.UGLYFY_FILENAME);
     }
     
     /*Put globals at the front of the line.

@@ -291,8 +291,57 @@ QUnit.test('structureJS.resolveFilePath',function( assert ){
               , 'input of UGLYFY_FILENAME resolved correctly');
               
 });
-
-
+/*
+  case : any files in config.commons put infront of modules
+  case : if state['pmiFilesSelectedForExport'] != '' 
+            UGLYFY_FILENAME is placed at front of globals 
+  case : config.globals should be in front
+  case : state['pmiFileOrder'] should be the same as state['resolvedFileList']
+  case : created script tags should be in the same order as state['pmiFileOrder']
+  case : onComplete should fire
+*/
+QUnit.test('structureJS.loadModules',function( assert ){
+  var MockStructureJS = getMockStructureJS(
+  {
+    state : {
+      resolvedFileList : ['resolved1','resolved2','resolved3'],
+      pmiFilesSelectedForExport : 'export1, export2'
+    },
+    config : {
+      commons : ['common1', 'common2'],
+      globals : ['global1']
+      
+    },
+    functionDependencies : {
+      fakeHead : [],
+      resolveDirectoryAliases : structureJS.resolveDirectoryAliases,
+      resolveFilePath : structureJS.resolveFilePath,
+      loadScript : function(url, onComplete){
+        this.fakeHead.push(url);
+        onComplete.call(null);
+      }
+    }
+  });
+  
+  var filesToExportOutcome = ["lib/uglifyjs.min.js", "global1.js", "common1.js", "common2.js", 
+                             "resolved1.js", "resolved2.js", "resolved3.js"];
+  var noFilesToExportOutcome = ["global1.js", "common1.js", "common2.js", 
+                                "resolved1.js", "resolved2.js", "resolved3.js"];                              
+  
+  structureJS.loadModules.call(MockStructureJS, {}, function(){
+    assert.deepEqual(MockStructureJS.fakeHead, filesToExportOutcome 
+                    , 'With files to export.');
+  });           
+  /*
+  structureJS.resetCoreState.call(MockStructureJS);
+  MockStructureJS.fakeHead.length = 0;
+  
+  structureJS.loadModules.call(MockStructureJS, {}, function(){
+      assert.deepEqual(MockStructureJS.fakeHead, noFilesToExportOutcome 
+                      , 'With no files to export.');  
+    });
+  */
+});
 
 
 
