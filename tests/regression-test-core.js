@@ -1,12 +1,33 @@
 window.onload = function(){
-
+/* Style Guidelines:
+  COL_MAX = 100 columns 
+  if over COL_MAX multi-line function args or string
+  
+  Multi-line function agrs:
+  new args should start with ',' to visually indicate a function arg
+  add newline between mutil-lines and next statement
+  
+  if <= 2 lines
+  comma aligns with opening parenthesis of function call
+  
+  if > 2 lines
+  move all args below the function call and indent the args like a block
+  
+  callbacks as args:
+  indent one level from the comma alignment
+  
+*/
 QUnit.asyncTest( 'structureJS.loadScript', function( assert ) {
   expect( 1 );
   
-  structureJS.loadScript('dummy-script.js', function(){
-    assert.ok( window.scriptLoaded, "structureJS.loadScript is working." );
-    QUnit.start();
-  }, 'dummy-script');
+  structureJS.loadScript(
+    'dummy-script.js'
+    , function(){
+        assert.ok( window.scriptLoaded, "structureJS.loadScript is working." );
+        QUnit.start();
+      }
+    , 'dummy-script'
+  );
 
 });
 
@@ -28,10 +49,12 @@ QUnit.test('structureJS.extend',function( assert ){
       notAnObject = 1;
                 
   structureJS.extend(target, source);
-  assert.deepEqual(target, expectedResultTarget, 'structureJS.extend - unshiftArray is undefined');
+  assert.deepEqual(target, expectedResultTarget
+                  , 'structureJS.extend - unshiftArray is undefined');
   
   structureJS.extend(targetCopy, source, true);
-  assert.deepEqual(targetCopy, expectedResultTargetCopy, 'structureJS.extend - unshiftArray is true');
+  assert.deepEqual(targetCopy
+                  , expectedResultTargetCopy, 'structureJS.extend - unshiftArray is true');
   
   try{
     structureJS.extend(notAnObject, source, true);
@@ -122,13 +145,26 @@ QUnit.test('structureJS.resetCoreState',function( assert ){
   
   });
   structureJS.resetCoreState.call(MockStructureJS);
-  assert.deepEqual(MockStructureJS.state['dependencyTree'], {}, "structureJS.state['dependencyTree'] = {}");
-  assert.deepEqual(MockStructureJS.state['resolvedFileList'], [], "structureJS.state['resolvedFileList'] = []");
-  assert.deepEqual(MockStructureJS.state['pmiFileOrder'], [], "structureJS.state['pmiFileOrder'] = []");
-  assert.deepEqual(MockStructureJS.state['declaredGroups'], [], "structureJS.state['declaredGroups'] = []");
-  assert.deepEqual(MockStructureJS.state['groupsInTLC'], {}, "structureJS.state['groupsInTLC'] = {}");
-  assert.deepEqual(MockStructureJS.config.globals.length, 0, "structureJS.config.globals.length = 0");
-  assert.deepEqual(MockStructureJS.config.commons.length, 0, "structureJS.config.commons.length = 0");
+  assert.deepEqual(MockStructureJS.state['dependencyTree'], {}
+                  , "structureJS.state['dependencyTree'] = {}");
+                  
+  assert.deepEqual(MockStructureJS.state['resolvedFileList'], []
+                  , "structureJS.state['resolvedFileList'] = []");
+                  
+  assert.deepEqual(MockStructureJS.state['pmiFileOrder'], []
+                  , "structureJS.state['pmiFileOrder'] = []");
+                  
+  assert.deepEqual(MockStructureJS.state['declaredGroups'], [] 
+                  , "structureJS.state['declaredGroups'] = []");
+                  
+  assert.deepEqual(MockStructureJS.state['groupsInTLC'], {}
+                  , "structureJS.state['groupsInTLC'] = {}");
+                  
+  assert.deepEqual(MockStructureJS.config.globals.length, 0
+                  , "structureJS.config.globals.length = 0");
+                  
+  assert.deepEqual(MockStructureJS.config.commons.length, 0
+                  , "structureJS.config.commons.length = 0");
   
 });
 
@@ -140,41 +176,51 @@ QUnit.test('structureJS.resolveDirectoryAliases',function( assert ){
   case : remote discovery flags side effect with remote keyword
   */
   var remoteKeywordReplaced = structureJS.resolveDirectoryAliases.call(
-    mockStructureJS, 
-    mockStructureJS.REMOTE_KEYWORD + '/test', 
-    'shouldNotBeApplied'
-  );
+                                mockStructureJS
+                                , mockStructureJS.REMOTE_KEYWORD + '/test'
+                                , 'shouldNotBeApplied'
+                              );
+                              
   /*Assertion*/
-  assert.ok(mockStructureJS.flags['hasRemotes'],"mockStructureJS.flags['hasRemotes'] set true on remote keyword.");
+  assert.ok(mockStructureJS.flags['hasRemotes']
+            , "mockStructureJS.flags['hasRemotes'] set true on remote keyword.");
   
   /*----Setup
   case : remote discovery flags side effect with remote keyword
   */
   mockStructureJS.flags['hasRemotes'] = false;
   /*Assertion*/
-  assert.equal(remoteKeywordReplaced, mockStructureJS.REMOTE_URL + 'test.js', "remote keyword correctly replaced by configured URL." );
+  assert.equal(
+    remoteKeywordReplaced, 
+     mockStructureJS.REMOTE_URL + 'test.js'
+    , "remote keyword correctly replaced by configured URL." 
+  );
   
   /*----Setup
   case : remote discovery flags side effect with http | // protocol
   */
   structureJS.resolveDirectoryAliases.call(
-    mockStructureJS, 
-    'http://test', 
-    'shouldNotBeApplied'
+    mockStructureJS
+    , 'http://test'
+    , 'shouldNotBeApplied'
   );
+  
   /*Assertion*/
-  assert.ok(mockStructureJS.flags['hasRemotes'],"mockStructureJS.flags['hasRemotes'] set true on http:// protocol found in file path");
+  assert.ok(mockStructureJS.flags['hasRemotes']
+            , "mockStructureJS.flags['hasRemotes'] set true on http:// protocol found in file path");
   
   /*----Setup*/
   mockStructureJS.flags['hasRemotes'] = false;
   
   structureJS.resolveDirectoryAliases.call(
-    mockStructureJS, 
-    '//test', 
-    'shouldNotBeApplied'
+    mockStructureJS
+    , '//test'
+    , 'shouldNotBeApplied'
   );
+  
   /*Assertion*/
-  assert.ok(mockStructureJS.flags['hasRemotes'],"mockStructureJS.flags['hasRemotes'] set true on // protocol found in file path");
+  assert.ok(mockStructureJS.flags['hasRemotes']
+            , "mockStructureJS.flags['hasRemotes'] set true on // protocol found in file path");
   
   /*----Setup
   case : remote keyword error
@@ -187,10 +233,11 @@ QUnit.test('structureJS.resolveDirectoryAliases',function( assert ){
   
   try{
     structureJS.resolveDirectoryAliases.call(
-      mockStructureJS, 
-      'test', 
-      'shouldNotBeApplied'
+      mockStructureJS 
+      , 'test'
+      , 'shouldNotBeApplied'
     );
+    
   }catch(e){
   /*Assertion*/
     assert.ok(true, 'Correctly threw RemoteKeywordFound error: ' + e);
@@ -201,10 +248,11 @@ QUnit.test('structureJS.resolveDirectoryAliases',function( assert ){
   */
   mockStructureJS = getMockStructureJS();
   var baseCorrectlyApplied = structureJS.resolveDirectoryAliases.call(
-      mockStructureJS, 
-      'test', 
-      'shouldBeApplied/'
-    );
+                              mockStructureJS
+                              , 'test'
+                              , 'shouldBeApplied/'
+                            );
+    
   /*Assertion*/
   assert.equal(baseCorrectlyApplied, 'shouldBeApplied/test.js', 'defaultBase correctly applied');
   
@@ -212,13 +260,100 @@ QUnit.test('structureJS.resolveDirectoryAliases',function( assert ){
   case : alias correctly found and replaced
   */
   var aliasCorrectlyApplied = structureJS.resolveDirectoryAliases.call(
-      mockStructureJS, 
-      'export_bootstrap/test', 
-      'shouldNotBeApplied/'
-    );
+                                mockStructureJS 
+                                , 'export_bootstrap/test'
+                                , 'shouldNotBeApplied/'
+                              );
+                              
   /*Assertion*/
-   assert.equal(aliasCorrectlyApplied, '../../structureJS/Bootstraps/test.js', 'defaultBase correctly applied');
+   assert.equal(aliasCorrectlyApplied 
+                , '../../structureJS/Bootstraps/test.js', 'defaultBase correctly applied');
+                
 });
+
+QUnit.test('structureJS.resolveFilePath',function( assert ){
+  var MockStructureJS = getMockStructureJS(
+  {
+    functionDependencies : {
+      resolveDirectoryAliases : structureJS.resolveDirectoryAliases
+    }
+  });
+  
+  var inputObject = structureJS.resolveFilePath.call(MockStructureJS, {file1 : []});
+  var inputString = structureJS.resolveFilePath.call(MockStructureJS, 'file1');
+  var inputUglifyString = structureJS.resolveFilePath.call(MockStructureJS
+                          , MockStructureJS.UGLYFY_FILENAME);
+  
+  assert.equal(inputObject, 'file1.js','input of type Object resolved correctly');
+  assert.equal(inputString, 'file1.js','input of type String resolved correctly');
+  assert.equal(inputUglifyString, 
+              MockStructureJS.config.core_lib_folder + MockStructureJS.UGLYFY_FILENAME + '.js'
+              , 'input of UGLYFY_FILENAME resolved correctly');
+              
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 };

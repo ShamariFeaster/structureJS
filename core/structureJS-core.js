@@ -249,6 +249,8 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     var config = this.config;
     
     var filePath = '';
+    /*This for objects pulled off state['dependencyTree']. They look like:
+    { filename : [....dependency files names....]}*/
     if( input && typeof input === 'object' ){
       filePath = this.resolveDirectoryAliases(Object.keys(input)[0], config.project_base);//config.module_base + Object.keys(input)[0] + '.js';
     }else if(input == this.UGLYFY_FILENAME){
