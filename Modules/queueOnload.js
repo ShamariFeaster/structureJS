@@ -5,7 +5,7 @@ function(require){
   var _functions = [];
   
   /*FIFO function execution*/
-  function executeStack(){
+  function executeQueue(){
     var funcObj = null;
     for(var i = 0; i < _functions.length; i++){
       funcObj = _functions[i];
@@ -13,7 +13,8 @@ function(require){
     }
   };
   /*bind function to onload event*/
-  window.onload = executeStack;
+  /*FIX:rather than clober onload, I should see if something was there before and add it to the Queue*/
+  window.onload = executeQueue;
   
   return {
   

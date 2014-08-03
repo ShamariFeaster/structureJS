@@ -1,3 +1,5 @@
+/*FIX:uglifyJS is a global dependency. Should add this to module description object to
+      throw error if it isn't found*/
 structureJS.module(
 {
 name: 'structureJS-compress', 

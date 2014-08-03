@@ -109,6 +109,9 @@ function(require){
           try{
             _this.resolveDependencies();
             _this.constructExportOrder();
+            /*FIX:this loads uglifyJS, which is async (and a big file at that) but it doesn't accept
+                  a callback to make sure subsequent calls are synchronous. UglifyJS should be listed 
+                  as a global in the PMI's config*/
             _this.loadDrivers();
             core.flags['exportInitiated'] = true;
           }catch(e){
