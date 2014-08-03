@@ -276,7 +276,11 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     var globals = _this.config.globals || [];
     var commons = _this.config.commons || [];
 
-    /*Wrap commons and push onto front of modules*/
+    /*Wrap commons and push onto front of modules.
+    TODO: why did I wrap global in an object? If it was only to signal to
+    resolveFilePath that it's a global and should be prefixed with 'lib/' then
+    I need to change that.
+    */
     for(var i = commons.length - 1; i >= 0; i--){
       var obj = {}; obj[commons[i]] = null;
       _this.state['resolvedFileList'].unshift(obj);

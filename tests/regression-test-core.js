@@ -292,17 +292,16 @@ QUnit.test('structureJS.resolveFilePath',function( assert ){
               
 });
 /*
-  case : any files in config.commons put infront of modules
+  case : any files in config.commons put infront of modules X
   case : if state['pmiFilesSelectedForExport'] != '' 
-            UGLYFY_FILENAME is placed at front of globals 
-  case : config.globals should be in front
-  case : state['pmiFileOrder'] should be the same as state['resolvedFileList']
-  case : created script tags should be in the same order as state['pmiFileOrder']
-  case : onComplete should fire
+            UGLYFY_FILENAME is placed at front of globals X
+  case : config.globals should be in front X
+  case : state['pmiFileOrder'] should be the same as state['resolvedFileList'] X
+  case : created script tags should be in the same order as state['pmiFileOrder'] X
+  case : onComplete should fire X
 */
 QUnit.test('structureJS.loadModules',function( assert ){
-  var MockStructureJS = getMockStructureJS(
-  {
+  var mockInitState = {
     state : {
       resolvedFileList : ['resolved1','resolved2','resolved3'],
       pmiFilesSelectedForExport : 'export1, export2'
@@ -316,12 +315,20 @@ QUnit.test('structureJS.loadModules',function( assert ){
       fakeHead : [],
       resolveDirectoryAliases : structureJS.resolveDirectoryAliases,
       resolveFilePath : structureJS.resolveFilePath,
+      resetCoreState : structureJS.resetCoreState,
       loadScript : function(url, onComplete){
         this.fakeHead.push(url);
         onComplete.call(null);
+      },
+      reset : function(){
+        this.fakeHead.length = 0;
+        this.state['resolvedFileList'] = ['resolved1','resolved2','resolved3'];
+        this.state['pmiFileOrder'] = [];
+        this.config.globals = ['global1'];
       }
     }
-  });
+  };
+  var MockStructureJS = getMockStructureJS(mockInitState);
   
   var filesToExportOutcome = ["lib/uglifyjs.min.js", "global1.js", "common1.js", "common2.js", 
                              "resolved1.js", "resolved2.js", "resolved3.js"];
@@ -331,16 +338,19 @@ QUnit.test('structureJS.loadModules',function( assert ){
   structureJS.loadModules.call(MockStructureJS, {}, function(){
     assert.deepEqual(MockStructureJS.fakeHead, filesToExportOutcome 
                     , 'With files to export.');
+    assert.deepEqual( filesToExportOutcome, MockStructureJS.state['pmiFileOrder'] 
+                    , "Deep copy of state['resolvedFileList'] to state['pmiFileOrder'] working");
   });           
-  /*
-  structureJS.resetCoreState.call(MockStructureJS);
-  MockStructureJS.fakeHead.length = 0;
   
+  MockStructureJS.reset();
+  MockStructureJS.state['pmiFilesSelectedForExport'] = '';
+
+ 
   structureJS.loadModules.call(MockStructureJS, {}, function(){
       assert.deepEqual(MockStructureJS.fakeHead, noFilesToExportOutcome 
                       , 'With no files to export.');  
     });
-  */
+  
 });
 
 
