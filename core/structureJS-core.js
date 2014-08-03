@@ -249,6 +249,12 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     var config = this.config;
     
     var filePath = '';
+    
+    /*FIX: It looks like the whole reson this function exists is to prepend config.core_lib_folder in front of UGLYFY_FILENAME 
+           and to use the key of a dependency object as the file name. It might be better to to the key->string:filename transformation
+           at the end of the dependency resolution process and doing the config.core_lib_folder/UGLYFY_FILENAME prepension elsewhere
+           and then use resolveDirectoryAliases() instead and eliminate this function*/
+           
     /*This for objects pulled off state['dependencyTree']. They look like:
     { filename : [....dependency files names....]}*/
     if( input && typeof input === 'object' ){
@@ -316,21 +322,26 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     _this.loadScript( this.resolveFilePath( _this.state['resolvedFileList'].shift() ) , callback );
     
   },
+  /*
+  @method loadConfigAndManifest
+  @module core
+  @param {Function} onLoaded 
+    callback fired when function is complete 
+  @param {String} bootstrapBase
+    used by structureJS-export to set the bootstrap location relative 
+    to itself, since that's the context in which scripts get loaded in the PMI.
+  @return void
+  */
   loadConfigAndManifest : function(onLoaded, bootstrapBase){
     /*First Run through use structreJS base passed in via tag*/
-    var baseDir = '',
-        bootstrapLoc = '',
+    var bootstrapLoc = '',
        _this = this;
-    if(this.config.project_base == '')
-      baseDir = this.config.core_base;
-    else
-      baseDir = this.config.project_base;
-    
-    
-    //recursive callback
+
+    /*FIX:  use more descriptive names for the different callbacks OR
+            use conditional to combine the two callbacks*/
     var callback = function(){
-        console.log('Loading Manifest: ' + baseDir + _this.config.manifest_name );
-        _this.loadScript(baseDir + _this.config.manifest_name + '.js', function(){
+        console.log('Loading Manifest: ' + _this.config.project_base + _this.config.manifest_name );
+        _this.loadScript(_this.config.project_base + _this.config.manifest_name + '.js', function(){
         
           console.log('Done Loading Config And Manifest Config Files.');
         
@@ -348,12 +359,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
         is set here per-project because all script loading is relative to tag location.
         without this bootstrap could not load.*/
 
-      /* Configuring Framework Specific Project Files
-        ---------------------------------------------
-        User can set per-project loactions for framework-specific files by using aliases
-        in bootstrap config like 'angular' which would resolve to 'angular/' in specific
-        project*/
-        
+       
         /*This runs if we user has set 'bootstrap_config' in project config. This makes bootstrap config 
        run before our manifest*/
       var thisCallback = function(){
@@ -369,9 +375,9 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
       };
       
       /*Load bootstrap config. Core config has been reset using resetCoreState()*/
-      this.loadScript(baseDir + _this.config.config_name + '.js' , function(){
-        /*We restore normal import order is user has not set 'bootstrap_config' in project config
-          AND 'directory_aliases.bootstrap' is set. Without this we don't know where bootstrap files
+      this.loadScript(_this.config.project_base + _this.config.config_name + '.js' , function(){
+        /*We restore normal import order if user has not set 'bootstrap_config' in project config
+          AND 'directory_aliases.bootstrap' is not set. Without this we don't know where bootstrap files
           are relative to our project*/
         if( (typeof _this.config.directory_aliases != 'undefined' && typeof _this.config.directory_aliases.bootstrap == 'undefined') 
         || _this.config.bootstrap_config == null){
@@ -435,7 +441,6 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     }
     require._class = require;
     structureJS.require = require;
-    
 
     /*Put the return val of the module function into modules object
     so they can be retrieved later using 'require'*/
