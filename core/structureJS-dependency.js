@@ -171,7 +171,7 @@ structureJS.module('structureJS-dependency',function(require){
             return modules[i];
         }
       }
-      
+
       function insertBefore(obj, targetIndex){
         var objIndex = getIndex( getModName(obj) );
         var targetObj = getModObj( getModName(modules[targetIndex]) );
@@ -222,6 +222,8 @@ structureJS.module('structureJS-dependency',function(require){
         }
       }
       this.printOrder('OrderImports: Ending Order: ', modules);
+      /*FIX:iterate modules array and upon seeing an element that's an object, replace it with
+            the object's key. This is to help eliminate core.resolveFileName()*/
       return modules;
     },
     orderImportsNoTLCChange : function(needTree){

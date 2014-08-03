@@ -292,6 +292,8 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
       _this.state['resolvedFileList'].unshift(obj);
     }
     /*put uglifyjs at front of globals if uglify mode*/
+    /*FIX:append config.core_base + config.core_lib_folder to UGLYFY_FILENAME here.
+          This is to help eliminate core.resolveFileName()*/
     if(_this.state['pmiFilesSelectedForExport'] != '') {
       globals.unshift(_this.UGLYFY_FILENAME);
     }
