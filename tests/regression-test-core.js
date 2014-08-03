@@ -16,6 +16,8 @@ window.onload = function(){
   callbacks as args:
   indent one level from the comma alignment
   
+  Definitions:
+    i|in - is and is not
 */
 QUnit.asyncTest( 'structureJS.loadScript', function( assert ) {
   expect( 1 );
@@ -315,7 +317,6 @@ QUnit.test('structureJS.loadModules',function( assert ){
       fakeHead : [],
       resolveDirectoryAliases : structureJS.resolveDirectoryAliases,
       resolveFilePath : structureJS.resolveFilePath,
-      resetCoreState : structureJS.resetCoreState,
       loadScript : function(url, onComplete){
         this.fakeHead.push(url);
         onComplete.call(null);
@@ -353,7 +354,103 @@ QUnit.test('structureJS.loadModules',function( assert ){
   
 });
 
+/*
+  case : if bootstrapping i|in requested, check proper outcome
+  case : if bootstrapping is requested & bootstrapBase i|in set, check proper outcome
+*/
 
+QUnit.test('structureJS.loadConfigAndManifest',function( assert ){
+  var mockInitState = {
+    state : {
+      resolvedFileList : ['resolved1','resolved2','resolved3'],
+      pmiFilesSelectedForExport : ''
+    },
+    config : {
+      commons : ['common1', 'common2'],
+      globals : ['global1']
+    },
+    functionDependencies : {
+      fakeHead : [],
+      bootstrapConfigure : structureJS.bootstrapConfigure,
+      extend : structureJS.extend,
+      loadScript : function(url, onComplete){
+        this.fakeHead.push(url);
+        onComplete.call(null);
+      },
+      setBootstrapConfiguration : function(bootstrapAlias, bootstrapConfig){
+        this.config.directory_aliases.bootstrap = bootstrapAlias;
+        this.config.bootstrap_config = bootstrapConfig;
+      },
+      reset : function(){
+        this.fakeHead.length = 0;
+        this.state['resolvedFileList'] = ['resolved1','resolved2','resolved3'];
+        this.state['pmiFileOrder'] = [];
+        this.config.globals = ['global1'];
+        /*As per the logic in loadConfigAndManifest, the following 2 statements
+        should signal to loadConfigAndManifest NOT to load the bootstrap config*/
+        this.setBootstrapConfiguration('',null);
+        delete this.config.directory_aliases.bootstrap;
+      }
+    }
+  };
+  var MockStructureJS = getMockStructureJS(mockInitState);
+  
+  var bootstrapBase = 'bootstrapBase/';
+  var bootstrapRequestedOutcome = ['config/config.js', 'bootstrap/Config/bootstrap.js', 
+                                   'manifest/core-manifest.js'];
+                                   
+  var bootstrapBaseSet = ['config/config.js', bootstrapBase + 'Config/bootstrap.js', 
+                          'manifest/core-manifest.js'];                                 
+                          
+  var bootstrapNotRequestedOutcome = ['config/config.js', 'manifest/core-manifest.js'];                              
+  
+  /* 
+  UNECESSARY FOR THIS TEST
+  NOTE : This should be used for unit testing proper loading of bootstrapped projects*/
+  MockStructureJS.bootstrapConfigure(
+  {
+    commons : ['app','controller-declarations'], 
+    globals : ['bootstrap/Angular/angular','bootstrap/Angular/angular-route']
+  });
+  /*UNECESSARY FOR THIS TEST*/
+  
+  /*case : if bootstrapping is not requested, check proper outcome*/
+  MockStructureJS.setBootstrapConfiguration('bootstrap/','Config/bootstrap');
+  
+  structureJS.loadConfigAndManifest.call(
+    MockStructureJS
+    , function(){
+        assert.deepEqual(MockStructureJS.fakeHead, bootstrapRequestedOutcome 
+                        , 'Bootstrapping requested');
+      }
+  );           
+  
+  MockStructureJS.reset();
+  
+  /*case : if bootstrapping is not requested, check proper outcome*/
+  structureJS.loadConfigAndManifest.call(
+    MockStructureJS
+    , function(){
+        assert.deepEqual(MockStructureJS.fakeHead, bootstrapNotRequestedOutcome 
+                        , 'Bootstrapping not requested');
+      }
+  );
+
+  MockStructureJS.reset();
+  
+  /*case : if bootstrapping is requested & bootstrapBase is set, check proper outcome*/
+  MockStructureJS.setBootstrapConfiguration('bootstrap/','Config/bootstrap');
+  
+  structureJS.loadConfigAndManifest.call(
+    MockStructureJS
+    , function(){
+        assert.deepEqual(MockStructureJS.fakeHead, bootstrapBaseSet 
+                        , 'Bootstrapping requested with bootstrapBase set');
+      }
+    , bootstrapBase 
+  ); 
+  
+});
 
 
 

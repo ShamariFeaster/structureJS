@@ -22,8 +22,8 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     project_base : '', /*defaults to './'*/ 
     manifest_name : 'manifest/core-manifest',/*These are default for the core*/
     config_name : 'config/config',/*These are default for the core*/
-    bootstrap_base : null,
-    bootstrap_config : null,
+    bootstrap_base : null,   /*FIX: config.bootstrap_base intial state should be '' instead of null */
+    bootstrap_config : null, /*FIX: config.bootstrap_config intial state should be '' instead of null */
     directory_aliases : {export_bootstrap : '../../structureJS/Bootstraps/'},
     globals : [],
     commons : []
@@ -379,8 +379,11 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
         /*We restore normal import order if user has not set 'bootstrap_config' in project config
           AND 'directory_aliases.bootstrap' is not set. Without this we don't know where bootstrap files
           are relative to our project*/
+          
+        /*FIX:config.bootstrap_config intial state should be '' instead of null. Also it appears I'm making
+              required for bootstrapping, so this should be noted in the documentation.*/
         if( (typeof _this.config.directory_aliases != 'undefined' && typeof _this.config.directory_aliases.bootstrap == 'undefined') 
-        || _this.config.bootstrap_config == null){
+        || _this.config.bootstrap_config == null){ 
          thisCallback =  callback;
         }
          
