@@ -276,7 +276,9 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     callback executed when all file and/or modules are loaded
   @return void
   */
-  /*FIX: config arg is not being used. we use core.config regardless*/
+  /*FIX:config arg is not being used. we use core.config regardless. This seems misnamed
+        b/c it really loads files that might not have modules.
+  */
   loadModules : function(config, onComplete){
     var _this = this;
     var globals = _this.config.globals || [];
@@ -394,7 +396,15 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
 
   },
   /*@EndDeploymentRemove*/
+  /*
+  decodes the module configuration object passed to core.module()
   
+  @method decodeInfoObj
+  @module core
+  @param {String|Object} infoObj 
+    module configuration object
+  @return {Object} metadata object that is read by core.module()
+  */
   decodeInfoObj : function(infoObj){
     var results = {name : ''};
     if(typeof infoObj === 'string')
@@ -407,10 +417,22 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     }
     return results;
   },
+  /*
+  Loads modules into the core. It executes the module functions and passed them the 
+  require function that modules use to access dependencies. 
+  
+  @method module
+  @module core
+  @param {String|Object} modConfig 
+    module configuration object
+  @param {Function} executeModule 
+    function containing module logic. It must return something
+  @return void
+  */
   module : function(modConfig, /*function*/ executeModule){
-    if(typeof modConfig == 'undefined' || typeof modConfig === 'function')
+    if(typeof modConfig == 'undefined' || (typeof modConfig !== 'string' && typeof modConfig !== 'object') )
       throw 'Module Must Have Configuration Object Or Name String';
-    if(typeof executeModule !== 'function')
+    if(typeof executeModule == 'undefined' || typeof executeModule !== 'function')
       throw 'Module Must Have A Function As It\'s Definition';
       
     var _this = this;
@@ -455,25 +477,57 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     
     this.state['modules'][infoObj.name] = moduleWrapper;
   },
+
+  /*
+  Loads modules into the core. It executes the module functions and passed them the 
+  require function that modules use to access dependencies. This exists to add structureJS
+  specific metadata to a module defined using AMD.
   
-  /*I split this up because I want the module importation via require to be transparent
-  to the user. so require will correctly get any type of module*/
+  @method moduleAMD
+  @module core
+  @param {String} modName 
+    name of the module 
+  @param {Function} executeModule 
+    function containing module logic. It must return something
+  @return void
+  */
   moduleAMD : function(modName, executeModule){
     var moduleWrapper = {type : 'amd', name : modName};
     moduleWrapper['module'] = executeModule.call(null).call(null);
     if(typeof moduleWrapper['module'] == 'undefined')
       throw 'Module Function Definition Must Return Something';
-    //this.pLog(2,'AMD: Loading ' + modName);
+
     this.state['modules'][modName] = moduleWrapper;
   },
+  /*
+  
+  @method declare
+  @module core
+  @param {String | Object} groupInfo 
+    name of the module 
+  @param {Array} dependencies 
+    name of the module 
+  @return void
+  */
+  /*FIX:should check elements of dependencies are typeof string*/
   declare : function(name, dependencies){
-    /*Add error checking here for name*/
-    if(typeof dependencies == 'undefined')
+    if(typeof name !== 'string')
+      throw "Parameter 'name' must be a string.";
+      
+    if(typeof dependencies == 'undefined' || !Array.isArray(dependencies))
       dependencies = [];
 
     this.state['dependencyTree'][name] = dependencies;
     
   },
+  /*
+  
+  @method declareGroup
+  @module core
+  @param {String | Object} groupInfo 
+    name of the module 
+  @return void
+  */
   declareGroup : function(groupInfo){
     var _this = this;
     var infoObj = this.decodeInfoObj(groupInfo);

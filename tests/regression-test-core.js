@@ -61,7 +61,7 @@ QUnit.test('structureJS.extend',function( assert ){
   try{
     structureJS.extend(notAnObject, source, true);
   }catch(e){
-    assert.ok(true, 'Non object passed. Error correctly thrown: ' + e);
+    assert.ok(true, 'Non object passed. Error correctly thrown: ERROR: ' + e);
   }
 });
 
@@ -242,7 +242,7 @@ QUnit.test('structureJS.resolveDirectoryAliases',function( assert ){
     
   }catch(e){
   /*Assertion*/
-    assert.ok(true, 'Correctly threw RemoteKeywordFound error: ' + e);
+    assert.ok(true, 'Correctly threw RemoteKeywordFound error: ERROR: ' + e);
   }
   
   /*----Setup
@@ -452,10 +452,154 @@ QUnit.test('structureJS.loadConfigAndManifest',function( assert ){
   
 });
 
+QUnit.test('structureJS.decodeInfoObj',function( assert ){
 
-
-
-
+  assert.deepEqual(structureJS.decodeInfoObj('name'), {name : 'name'}, 'String passed works.');
+  assert.deepEqual(structureJS.decodeInfoObj({name : 'name'}), {name : 'name'}, 'Object passed works.');
+  try{
+    structureJS.decodeInfoObj({notName : 'name'});
+  }catch(e){
+    assert.ok(true, 'Threw error on object with no  \'name\' property: ERROR: ' + e );
+  }
+});
+/*
+  case : 0 or 1 arguments should error
+  case : arguments 2 is not a function should error
+  case : modConfig.global_dependencies declared but is not array should error
+  case : modConfig.global_dependencies declared, elements should be properties of window object
+  case : void moduleFunction should error
+  case : typeof state.modules[_moduleName_] should be Object
+  case : typeof state.modules[_moduleName_]['module'] should be deinfed
+*/
+QUnit.test('structureJS.module',function( assert ){
+  var mockInitState = {
+    functionDependencies : {
+      module : structureJS.module,
+      decodeInfoObj : structureJS.decodeInfoObj,
+      reset : function(){
+        this.state['modules'] = {};
+      }
+    }
+  };
+  var MockStructureJS = getMockStructureJS(mockInitState);
+  
+  var mockModule = function(require){
+    return {};
+  };
+  
+  try{
+    structureJS.module.call(MockStructureJS);
+  }catch(e){
+    assert.ok(true, 'Threw error with 0 arguments: ERROR: ' + e );
+  }
+  
+  try{
+    structureJS.module.call(MockStructureJS, function(){});
+  }catch(e){
+    assert.ok(true, 'Threw error modConfig != object or string (Function): ERROR:  ' + e );
+  }
+  
+  try{
+    structureJS.module.call(MockStructureJS, false);
+  }catch(e){
+    assert.ok(true, 'Threw error modConfig != object or string (Boolean primitive): ERROR: ' + e );
+  }
+  
+  //window.scriptLoaded
+  try{
+    structureJS.module.call(
+      MockStructureJS
+      , {name : 'name', global_dependencies : 'scriptLoaded' }
+      , mockModule
+    );
+  }catch(e){
+    assert.ok(true, 'Threw error typeof global_dependencies != Array: ERROR: ' + e );
+  }
+  
+  try{
+    structureJS.module.call(
+      MockStructureJS
+      , {name : 'name', global_dependencies : ['notOnWindow'] }
+      , mockModule
+    );
+  }catch(e){
+    assert.ok(true, 'Threw error declared global_dependency not on window object: ERROR: ' + e );
+  }
+  
+  try{
+    structureJS.module.call(
+      MockStructureJS
+      , {name : 'name', global_dependencies : ['scriptLoaded'] }
+      , mockModule
+    );
+    assert.ok(true, ' Declared global_dependency found on window object' );
+  }catch(e){
+    
+  }
+  
+  try{
+    structureJS.module.call(MockStructureJS, 'name', function(){});
+  }catch(e){
+    assert.ok(true, 'Threw error module didn\'t return anything: ERROR: ' + e );
+  }
+  
+  structureJS.module.call(MockStructureJS, 'name', mockModule);
+  assert.equal(
+    typeof MockStructureJS.state.modules['name']
+    , 'object'
+    , "typeof state.modules[_moduleName_] should be Object"
+  );
+  
+  assert.notEqual(
+    typeof MockStructureJS.state.modules['name']['module']
+    , 'undefined'
+    , "typeof state.modules[_moduleName_]['module'] is not undefined"
+  );
+});
+/*
+  case : parameter 'name' must be string (throws)
+  case : param 'dependencies' is added to state['dependencyTree'][_param_name_]
+  case : if param 'dependencies' is not an array or is undefined, it is initailized as []
+*/
+QUnit.test('structureJS.declare',function( assert ){
+  var paramName = 'name';
+  var mockInitState = {
+    functionDependencies : {
+      reset : function(){
+        this.state['dependencyTree'] = {};
+      }
+    }
+  };
+  var MockStructureJS = getMockStructureJS(mockInitState);
+  
+  try{
+    structureJS.declare.call(MockStructureJS, {}, function(){});
+  }catch(e){
+    assert.ok(true, 'Param name is not string: ERROR: ' + e );
+  }
+  
+  MockStructureJS.reset();
+  
+  structureJS.declare.call(MockStructureJS, paramName);
+  
+  assert.deepEqual(MockStructureJS.state['dependencyTree'][paramName],[]
+                  , "Param 'dependencies' undefined, itialized to [] ");
+  
+  MockStructureJS.reset();
+  
+  structureJS.declare.call(MockStructureJS, paramName, 'notTypeArray');
+  
+  assert.deepEqual(MockStructureJS.state['dependencyTree'][paramName],[]
+                  , "Param 'dependencies' not typeof Array, itialized to [] ");
+  
+  MockStructureJS.reset();
+  
+  structureJS.declare.call(MockStructureJS, paramName, ['dep1','dep2']);
+  
+  assert.deepEqual(MockStructureJS.state['dependencyTree'][paramName],['dep1','dep2']
+                  , "Param 'dependencies' placed on core.state['dependencyTree'][_param_name_]");
+  
+});
 
 
 
