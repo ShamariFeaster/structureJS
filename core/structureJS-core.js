@@ -521,6 +521,9 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     
   },
   /*
+  Adds group name to structreJS namespace and allows calling of core.declare() on a group.
+  This has the effect of giving a group it's own dependency resolution chain, which is resolved
+  separate from the top level chain (TLC).
   
   @method declareGroup
   @module core
@@ -537,15 +540,23 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     var groupNamespace = this[infoObj.name];//make structureJS.<group name> to declare files on
     groupNamespace.state = { dependencyTree : {}, declaredGroups : []};
 
-    /*Copying functions TODO: do this prototypically*/
     groupNamespace.declare = function(name, dependencies){
       /*uses declare to put dependeny tree together on <group name>.dependencyTree
       we would resolve this separately to construct hard group*/
       _this.declare.apply(groupNamespace, [name, dependencies]);
-      /*I don't want to add to TLC because unless user puts group in TLC*/
-      //_this.declare(name, dependencies);
     };
   },
+  /*
+  Get/set for core.cache storage
+  
+  @method cache
+  @module core
+  @param {String} key 
+    key of the cache object
+  @param {Any} value 
+    if present, sets the key tothis value 
+  @return void
+  */
   cache : function(key, value){
     var returnVal = null;
     if(arguments.length == 1 && this.state['cache'][key])
@@ -553,7 +564,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     if(arguments.length == 2 && key && value)  
       this.state['cache'][key] = value
     return returnVal;
-  },
+  }
 };
   
 (function(){

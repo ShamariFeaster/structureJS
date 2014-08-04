@@ -601,9 +601,81 @@ QUnit.test('structureJS.declare',function( assert ){
   
 });
 
+/*
+  case : Param 'groupInfo.name' is pushed to core.state['declaredGroups']
+  case : core[param_groupinfo_name] is created
+  case : core[param_groupinfo_name]['state'] is created as 
+         { dependencyTree : {}, declaredGroups : []}
+  case : core[param_groupinfo_name].declare() should add keys to 
+         core[param_groupinfo_name]['state']['dependencyTree']
+*/
+QUnit.test('structureJS.declareGroup',function( assert ){
+  var paramName = 'name';
+  var mockInitState = {
+    functionDependencies : {
+      decodeInfoObj : structureJS.decodeInfoObj,
+      declare : structureJS.declare,
+      reset : function(){
+        this.state['dependencyTree'] = {};
+        this.state['declaredGroups'] = [];
+      }
+    }
+  };
+  var MockStructureJS = getMockStructureJS(mockInitState);
+  structureJS.declareGroup.call(MockStructureJS, paramName);
+  
+  assert.deepEqual(MockStructureJS.state['declaredGroups']
+                  , [paramName]
+                  , "Param name pushed to core.state['declaredGroups']." );
+                  
+  MockStructureJS.reset();
+  
+  structureJS.declareGroup.call(MockStructureJS, paramName);
+  assert.notEqual(typeof MockStructureJS[paramName]
+                  , 'undefined'
+                  , "core.state[param_groupinfo_name] initalized to {}." );
+                  
+  MockStructureJS.reset();
+  
+  structureJS.declareGroup.call(MockStructureJS, paramName);
+  assert.deepEqual(MockStructureJS[paramName]['state']
+                  , { dependencyTree : {}, declaredGroups : []}
+                  , "core.state[param_groupinfo_name]['state;] properly initalized." );
+                  
+  MockStructureJS.reset();
+  
+  structureJS.declareGroup.call(MockStructureJS, paramName);
+  MockStructureJS[paramName].declare('blah');
+  assert.notEqual(typeof MockStructureJS[paramName]['state']['dependencyTree']['blah']
+                  , 'undefined'
+                  , "Group's dependencyTree properly added to with call to declare()" );
+});
 
+QUnit.test('structureJS.cache',function( assert ){
 
-
+  var paramKey = 'key';
+  var paramValue = 'value';
+  var mockInitState = {
+    functionDependencies : {
+      reset : function(){
+        this.state['cache'] = {structureJSTag : null};
+      }
+    }
+  };
+  var MockStructureJS = getMockStructureJS(mockInitState);
+  
+  structureJS.cache.call(MockStructureJS, 'structureJSTag');
+  assert.deepEqual(structureJS.cache.call(MockStructureJS, 'structureJSTag')
+                  , null
+                  , "cache get() working" );
+  
+  MockStructureJS.reset();
+  structureJS.cache.call(MockStructureJS, paramKey, paramValue);
+  assert.deepEqual(structureJS.cache.call(MockStructureJS, paramKey)
+                  , paramValue
+                  , "cache set() working" );
+  
+});
 
 
 
