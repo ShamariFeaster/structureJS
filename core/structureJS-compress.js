@@ -238,8 +238,21 @@ function(require){
     /*Super sweet way of attaching per-call data to callback function
     to give each callback a state*/
     xhr.onload.fileName = fileName;
+    xhr.onreadystatechange=function() {
+    if (xhr.readyState === 4){   //if complete
+        if(xhr.status !== 200){  //check if "OK" (200)
+          console.log(fileName + ' not found. Probably a bootstrap - trying one level above.');
+          xhr.open('get',  '../' + fileName, true);
+          xhr.send();
+        }
+      } 
+    }
+
     xhr.open('get',  fileName, true);
     xhr.send();
+
+    
+    
   }
   
   

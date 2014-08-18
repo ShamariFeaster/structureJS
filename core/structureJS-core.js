@@ -649,7 +649,11 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     });
   }else if(typeof window.structureJSUnitTestInProgress == 'undefined'){
     throw 'ERROR: he id attribute of the <script> tag is not set to "structureJS".';
-    }
+  }else if(typeof window.structureJSUnitTestInProgress != 'undefined'){
+    structureJS.module('core',function(){
+        return structureJS;
+      });
+  }
   /*@EndDeploymentRemove*/
   
 })();

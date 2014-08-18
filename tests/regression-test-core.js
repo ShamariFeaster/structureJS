@@ -1,4 +1,4 @@
-window.onload = function(){
+(function(){
 /* Style Guidelines:
   COL_MAX = 100 columns 
   if over COL_MAX multi-line function args or string
@@ -19,6 +19,8 @@ window.onload = function(){
   Definitions:
     i|in - is and is not
 */
+QUnit.module('Core Functional Tests');
+
 QUnit.asyncTest( 'structureJS.loadScript', function( assert ) {
   expect( 1 );
   
@@ -33,7 +35,7 @@ QUnit.asyncTest( 'structureJS.loadScript', function( assert ) {
 
 });
 
-QUnit.test('structureJS.extend',function( assert ){
+QUnit.test('core.extend',function( assert ){
   var source = {scalarClober : '2', array : [1,2,3], 
                 obj : {aClober : 'b', addition : 1}, addition : 'new'},
       
@@ -65,72 +67,7 @@ QUnit.test('structureJS.extend',function( assert ){
   }
 });
 
-function getMockStructureJS(extensionObjects){
-  
-  var MockStructureJS = {
-    options : {
-      download_minified : false,
-      minified_output_tag_id : 'minified',
-      log_priority : 3
-    },
-
-    config : {
-      core_base : '',
-      core_lib_folder : 'lib/',
-      project_base : '', 
-      manifest_name : 'manifest/core-manifest',
-      config_name : 'config/config',
-      bootstrap_base : null,
-      bootstrap_config : null,
-      directory_aliases : {export_bootstrap : '../../structureJS/Bootstraps/'},
-      globals : [],
-      commons : []
-      },
-
-    flags : {
-      hasRemotes : false,
-      exportInitiated : false,
-    },
-
-    state : {
-      dependencyTree : {}, 
-      resolvedFileList : [],
-      pmiFileOrder : [],
-      declaredGroups: [],
-      groupsInTLC : {},
-      pmiFilesSelectedForExport : '',    
-      modules : {},
-      cache : { structureJSTag : null } 
-    },
-
-    NAME : 'structureJS-core',
-    UGLYFY_FILENAME : 'uglifyjs.min',
-    EXPORT_CONFIG_FILENAME : 'export-config',
-    REMOTE_KEYWORD : 'remote',
-    REMOTE_URL : 'https://google.com/'
-  };
-  if(typeof extensionObjects == 'undefined')
-    extensionObjects = {};
-  if(typeof extensionObjects.options == 'undefined')
-    extensionObjects.options = {};
-  if(typeof extensionObjects.config == 'undefined')
-    extensionObjects.config = {};
-  if(typeof extensionObjects.flags == 'undefined')
-    extensionObjects.flagsObj = {};
-  if(typeof extensionObjects.state == 'undefined')
-    extensionObjects.stateObj = {};
-  if(typeof extensionObjects.functionDependencies == 'undefined')
-    extensionObjects.functionDependencies = {};
-  
-  structureJS.extend(MockStructureJS.options, extensionObjects.options );
-  structureJS.extend(MockStructureJS.config, extensionObjects.config);
-  structureJS.extend(MockStructureJS.flags, extensionObjects.flags );
-  structureJS.extend(MockStructureJS.state, extensionObjects.state);
-  structureJS.extend(MockStructureJS, extensionObjects.functionDependencies);
-  return MockStructureJS;
-}
-
-QUnit.test('structureJS.resetCoreState',function( assert ){
+QUnit.test('core.resetCoreState',function( assert ){
   var MockStructureJS = getMockStructureJS(
   {
     state : {
@@ -171,7 +108,7 @@ QUnit.test('structureJS.resetCoreState',function( assert ){
 });
 
 
-QUnit.test('structureJS.resolveDirectoryAliases',function( assert ){
+QUnit.test('core.resolveDirectoryAliases',function( assert ){
   var mockStructureJS = getMockStructureJS();
   
   /*----Setup
@@ -273,7 +210,7 @@ QUnit.test('structureJS.resolveDirectoryAliases',function( assert ){
                 
 });
 
-QUnit.test('structureJS.resolveFilePath',function( assert ){
+QUnit.test('core.resolveFilePath',function( assert ){
   var MockStructureJS = getMockStructureJS(
   {
     functionDependencies : {
@@ -302,7 +239,7 @@ QUnit.test('structureJS.resolveFilePath',function( assert ){
   case : created script tags should be in the same order as state['pmiFileOrder'] X
   case : onComplete should fire X
 */
-QUnit.test('structureJS.loadModules',function( assert ){
+QUnit.test('core.loadModules',function( assert ){
   var mockInitState = {
     state : {
       resolvedFileList : ['resolved1','resolved2','resolved3'],
@@ -359,7 +296,7 @@ QUnit.test('structureJS.loadModules',function( assert ){
   case : if bootstrapping is requested & bootstrapBase i|in set, check proper outcome
 */
 
-QUnit.test('structureJS.loadConfigAndManifest',function( assert ){
+QUnit.test('core.loadConfigAndManifest',function( assert ){
   var mockInitState = {
     state : {
       resolvedFileList : ['resolved1','resolved2','resolved3'],
@@ -452,7 +389,7 @@ QUnit.test('structureJS.loadConfigAndManifest',function( assert ){
   
 });
 
-QUnit.test('structureJS.decodeInfoObj',function( assert ){
+QUnit.test('core.decodeInfoObj',function( assert ){
 
   assert.deepEqual(structureJS.decodeInfoObj('name'), {name : 'name'}, 'String passed works.');
   assert.deepEqual(structureJS.decodeInfoObj({name : 'name'}), {name : 'name'}, 'Object passed works.');
@@ -471,7 +408,7 @@ QUnit.test('structureJS.decodeInfoObj',function( assert ){
   case : typeof state.modules[_moduleName_] should be Object
   case : typeof state.modules[_moduleName_]['module'] should be deinfed
 */
-QUnit.test('structureJS.module',function( assert ){
+QUnit.test('core.module',function( assert ){
   var mockInitState = {
     functionDependencies : {
       module : structureJS.module,
@@ -561,7 +498,7 @@ QUnit.test('structureJS.module',function( assert ){
   case : param 'dependencies' is added to state['dependencyTree'][_param_name_]
   case : if param 'dependencies' is not an array or is undefined, it is initailized as []
 */
-QUnit.test('structureJS.declare',function( assert ){
+QUnit.test('core.declare',function( assert ){
   var paramName = 'name';
   var mockInitState = {
     functionDependencies : {
@@ -609,7 +546,7 @@ QUnit.test('structureJS.declare',function( assert ){
   case : core[param_groupinfo_name].declare() should add keys to 
          core[param_groupinfo_name]['state']['dependencyTree']
 */
-QUnit.test('structureJS.declareGroup',function( assert ){
+QUnit.test('core.declareGroup',function( assert ){
   var paramName = 'name';
   var mockInitState = {
     functionDependencies : {
@@ -651,7 +588,7 @@ QUnit.test('structureJS.declareGroup',function( assert ){
                   , "Group's dependencyTree properly added to with call to declare()" );
 });
 
-QUnit.test('structureJS.cache',function( assert ){
+QUnit.test('core.cache',function( assert ){
 
   var paramKey = 'key';
   var paramValue = 'value';
@@ -678,54 +615,4 @@ QUnit.test('structureJS.cache',function( assert ){
 });
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-};
+})();
