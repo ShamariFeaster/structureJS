@@ -26,7 +26,8 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     bootstrap_config : null, /*FIX: config.bootstrap_config intial state should be '' instead of null */
     directory_aliases : {export_bootstrap : '../../structureJS/Bootstraps/'},
     globals : [],
-    commons : []
+    commons : [],
+    context : Object.create(null)
     },
   /*
   @property flags
@@ -471,10 +472,11 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
 
     /*Put the return val of the module function into modules object
     so they can be retrieved later using 'require'*/
-    moduleWrapper['module'] = executeModule.call(this, require); 
+    moduleWrapper['module'] = executeModule.call(structureJS.config.context, require); 
+    /*
     if(typeof moduleWrapper['module'] == 'undefined')
       throw infoObj.name + ' FAILED: Module Function Definition Must Return Something';
-    
+    */
     this.state['modules'][infoObj.name] = moduleWrapper;
   },
 
@@ -564,6 +566,32 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     if(arguments.length == 2 && key && value)  
       this.state['cache'][key] = value
     return returnVal;
+  },
+  /*
+  Sets 'this' for all subsequent modules in a project
+  
+  @method setContext
+  @module core
+  @param {Object} object 
+    object to become 'this' for subsequent modules
+
+  @return void
+  */
+  setContext : function(object){
+    this.config.context = object;
+  },
+  /*
+  Extends the existing context
+  
+  @method extendContext
+  @module core
+  @param {Object} object 
+    the properties form this object extend 'this' for subsequent modules
+
+  @return void
+  */
+  extendContext : function(object){
+    this.extend(this.config.context, object);
   }
 };
   
@@ -574,7 +602,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
   see: https://github.com/amdjs/amdjs-api/blob/master/AMD.md
        http://addyosmani.com/writing-modular-js/*/
   window.define = function(id, deps, factory){
-    window.structureJS.moduleAMD(id, factory);
+    //window.structureJS.moduleAMD(id, factory);
   };
   window.define.amd = {jQuery : true};
   
