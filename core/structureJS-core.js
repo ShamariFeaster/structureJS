@@ -592,6 +592,13 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
   */
   extendContext : function(object){
     this.extend(this.config.context, object);
+  },
+  
+  circular : function(depName){
+    if(typeof depName == 'undefined')
+      return this.circular;
+    else
+      return structureJS.state.modules[depName].module;
   }
 };
   
