@@ -27,6 +27,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     directory_aliases : {export_bootstrap : '../../structureJS/Bootstraps/'},
     globals : [],
     commons : [],
+    styles : [],
     context : Object.create(null)
     },
   /*
@@ -87,6 +88,15 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
       script.id = id;
     head.appendChild(script);
     script.onload = callback;
+  },
+  loadStyle : function(url, callback){
+    var head = document.getElementsByTagName('head')[0];
+    var sheet = document.createElement('link');
+    sheet.type = 'text/css';
+    sheet.rel = 'stylesheet';
+    sheet.href = url + '.css';
+    head.appendChild(sheet);
+    sheet.onload = callback;
   },
   /*
     Reset all proerties of core.state to default values as
@@ -327,6 +337,27 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     _this.loadScript( this.resolveFilePath( _this.state['resolvedFileList'].shift() ) , callback );
     
   },
+  loadStyles : function(onComplete){
+    var _this = this;
+    var sheets = _this.config.styles || [];
+    
+    var callback = function(){
+      var nextSheet = sheets.shift();
+      /*Still files to load up*/
+      if(nextSheet){
+        _this.loadStyle(nextSheet, callback);
+      }else{
+        if(typeof onComplete != 'undefined'){
+          onComplete.call(null);
+          console.log('Styles loaded');
+        }
+            
+      }
+    }
+    
+    _this.loadStyle(sheets.shift(), callback)
+  },
+  
   /*
   @method loadConfigAndManifest
   @module core
@@ -675,6 +706,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
           
           /*Explicitly load project manifest & config files, then resolve deps*/
           core.loadConfigAndManifest(function(){
+            core.loadStyles();
             core_resolve.resolveDependencies();/*End Project Resolve Block*/
           });
           
