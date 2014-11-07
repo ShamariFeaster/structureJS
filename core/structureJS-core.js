@@ -50,7 +50,8 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     groupsInTLC : {},
     pmiFilesSelectedForExport : '',    /*TODO: for consistency, change to array*/
     modules : {},
-    cache : { structureJSTag : null } 
+    cache : { structureJSTag : null },
+    doneQueue : [],    
   },
 
   //Constants
@@ -88,6 +89,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
       script.id = id;
     head.appendChild(script);
     script.onload = callback;
+
   },
   loadStyle : function(url, callback){
     var head = document.getElementsByTagName('head')[0];
@@ -96,7 +98,9 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     sheet.rel = 'stylesheet';
     sheet.href = url + '.css';
     head.appendChild(sheet);
+
     sheet.onload = callback;
+
   },
   /*
     Reset all proerties of core.state to default values as
@@ -321,10 +325,11 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
 
     //recursive callback
     var callback = function(){
-      var filePath = _this.resolveFilePath( _this.state['resolvedFileList'].shift() );
+      var __this = (typeof _this == 'undefined') ? this : _this; 
+      var filePath = __this.resolveFilePath( __this.state['resolvedFileList'].shift() );
       /*Still files to load up*/
       if(filePath){
-        _this.loadScript(filePath, callback);
+        __this.loadScript(filePath, callback);
       }else{
         if(typeof onComplete != 'undefined'){
           onComplete.call(null);
@@ -341,21 +346,22 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     var _this = this;
     var sheets = _this.config.styles || [];
     
-    var callback = function(){
+    var styleCallback = function(){
+      var __this = (typeof _this == 'undefined') ? this : _this; 
+      var sheets = _this.config.styles || [];
       var nextSheet = sheets.shift();
       /*Still files to load up*/
       if(nextSheet){
-        _this.loadStyle(nextSheet, callback);
+        _this.loadStyle(nextSheet, styleCallback);
       }else{
         if(typeof onComplete != 'undefined'){
           onComplete.call(null);
-          console.log('Styles loaded');
         }
             
       }
     }
     
-    _this.loadStyle(sheets.shift(), callback)
+    _this.loadStyle(sheets.shift(), styleCallback)
   },
   
   /*
@@ -375,7 +381,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
 
     /*FIX:  use more descriptive names for the different callbacks OR
             use conditional to combine the two callbacks*/
-    var callback = function(){
+    var lcmCallback = function(){
         console.log('Loading Manifest: ' + _this.config.project_base + _this.config.manifest_name );
         _this.loadScript(_this.config.project_base + _this.config.manifest_name + '.js', function(){
         
@@ -407,7 +413,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
         bootstrapLoc = (typeof bootstrapBase == 'undefined') ? 
                             _this.config.directory_aliases.bootstrap : bootstrapBase;
             
-        _this.loadScript(bootstrapLoc + _this.config.bootstrap_config + '.js', callback);
+        _this.loadScript(bootstrapLoc + _this.config.bootstrap_config + '.js', lcmCallback);
       };
       
       /*Load bootstrap config. Core config has been reset using resetCoreState()*/
@@ -420,7 +426,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
               required for bootstrapping, so this should be noted in the documentation.*/
         if( (typeof _this.config.directory_aliases != 'undefined' && typeof _this.config.directory_aliases.bootstrap == 'undefined') 
         || _this.config.bootstrap_config == null){ 
-         thisCallback =  callback;
+         thisCallback =  lcmCallback;
         }
          
          thisCallback.call(null);
@@ -630,10 +636,15 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
       return this.circular;
     else
       return structureJS.state.modules[depName].module;
+  },
+  
+  done : function(callback){
+    this.state['doneQueue'].push(callback);
   }
 };
   
 (function(){
+
   /*Trying to support AMD for jQuery. Total AMD compliance to come later.
     Becoming AMD compliant is going to require a lot of thought so that's something
     I think is best done by a community after open sourcing.
@@ -669,7 +680,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     core.config.manifest_name = structureJS.cache('structureJSTag').getAttribute('data-core-manifest') || core.config.manifest_name;
     /*Load project config and manifest*/
     core.loadConfigAndManifest(function(){
-      
+
       /*Excapsulte core in a module*/
       core.module('core',function(){
         return core;
@@ -684,11 +695,11 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
         
         We use it to resolve core dependencies*/
         core_resolve = core.require('structureJS-dependency');
-        
+
         /*resolveDependencies callback fired AFTER all files are loaded.
           In this case these were core modules.*/
         core_resolve.resolveDependencies(function(){
-          
+
           /*Reset core variables from core load & ready for project load*/
           core.resetCoreState();
           
@@ -706,8 +717,18 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
           
           /*Explicitly load project manifest & config files, then resolve deps*/
           core.loadConfigAndManifest(function(){
-            core.loadStyles();
-            core_resolve.resolveDependencies();/*End Project Resolve Block*/
+
+            core_resolve.resolveDependencies(function(){
+              core.loadStyles(function(){
+                var queue = core.state['doneQueue'] || [];
+                for(var i = 0; i < queue.length; i++){
+                  if(typeof queue[i] === 'function')
+                    queue[i].call(null);
+                }
+              });
+            });
+            
+            /*End Project Resolve Block*/
           });
           
           
