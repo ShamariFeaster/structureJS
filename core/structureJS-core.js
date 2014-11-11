@@ -36,7 +36,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
   */
   flags : {
     hasRemotes : false,
-    exportInitiated : false,
+    exportInitiated : false
   },
   /*
   @property state
@@ -51,7 +51,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     pmiFilesSelectedForExport : '',    /*TODO: for consistency, change to array*/
     modules : {},
     cache : { structureJSTag : null },
-    doneQueue : [],    
+    doneQueue : []
   },
 
   //Constants
@@ -97,7 +97,8 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     sheet.type = 'text/css';
     sheet.rel = 'stylesheet';
     sheet.href = url + '.css';
-    head.appendChild(sheet);
+    if(typeof url != 'undefined')
+      head.appendChild(sheet);
 
     sheet.onload = callback;
 
