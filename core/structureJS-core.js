@@ -97,10 +97,14 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     sheet.type = 'text/css';
     sheet.rel = 'stylesheet';
     sheet.href = url + '.css';
-    if(typeof url != 'undefined')
+    if(typeof url != 'undefined'){
       head.appendChild(sheet);
+      sheet.onload = callback;
+    }else if(typeof callback != 'undefined' && typeof callback == 'function'){
+      callback.call(null);
+    }
 
-    sheet.onload = callback;
+    
 
   },
   /*
