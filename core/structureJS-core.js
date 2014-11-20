@@ -637,10 +637,13 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
   },
   
   circular : function(depName){
-    if(typeof depName == 'undefined')
+    if(typeof depName == 'undefined'){
       return this.circular;
-    else
-      return structureJS.state.modules[depName].module;
+    }else{
+      var moduleWrapper = structureJS.state.modules[depName],
+          module = moduleWrapper.module;
+      return module;
+    }
   },
   
   done : function(callback){
