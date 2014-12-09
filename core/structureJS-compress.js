@@ -46,6 +46,7 @@ function(require){
     globalBase = core.config.global_base;
     var files = [];
     var compressFlg = true;
+    var NOT_GROUPED = 'NOTGROUPED';
     /*indexes are counters indexed on group name*/
     for(var i = 0; i < exports.length; i++){
       /*fileName could be soft group name*/
@@ -55,27 +56,34 @@ function(require){
           compressFlg = false;
         }
       fileName = exports[i].trim();
-      indexes[fileName] = 0;
+      
       thisGroup = core[fileName];
-      files = [];
+
       
       if(typeof thisGroup == 'undefined'){
-        files.push(fileName);
-        var exportObj = {name : fileName, files : files, output : '', compress : compressFlg};
-        exportList[exportObj.name] = exportObj;
+        if(typeof exportList['files'] == 'undefined' ){
+          indexes[NOT_GROUPED] = 0;
+          var exportObj = {name : NOT_GROUPED, files : files, output : '', compress : compressFlg};
+          exportObj['files'].push({ filename : projectBase + fileName, compress : compressFlg});
+          exportList[NOT_GROUPED] = exportObj;
+        }else{
+          exportList[NOT_GROUPED]['files'].push({ filename : projectBase + fileName, compress : compressFlg});
+        }
+        
+        
+        
       }else{
-
+        indexes[fileName] = 0;
         orderedGroupComponents = dependency.orderImportsNoTLCChange(thisGroup.state['dependencyTree']);
 
         files = dependency.dereferenceGroups( orderedGroupComponents );
         
         for(var i = 0; i < files.length; i++){
-          files[i] = projectBase + dependency.getFilename(files[i]) + '.js'
+          files[i] = { filename : projectBase + dependency.getFilename(files[i]) + '.js', compress : compressFlg}; 
         }
               
         var exportObj = {name : fileName, files : files, output : '', compress : compressFlg};
         exportList[fileName] = exportObj;
-
       }
       
       
@@ -106,13 +114,13 @@ function(require){
   /*The scoping on this is INSANE. I honestly don't even understand why it works 
   this way but it does. The callback executes in the context of the xhr request
   but it has access to the scope of the originating function (combineSrcFiles)
-  so listName stays the same through the whole sequence of xhr requests on
+  so groupName stays the same through the whole sequence of xhr requests on
   a group's files array. This allows me to index on exportList and, more importantly,
   indexes. This is what creates the separation of the outputs. The synchonization
   is achieved     Because the scopes of combineSrcFiles and the module
   remain stable through my execution I am able to separate and synchonize the
   output from sequential, but interleaving, calls to getSrc.  */
-  function combineSrcFiles(listName){
+  function combineSrcFiles(groupName){
     var tempOutput = '';
     var coutTag = document.getElementById(core.options.cout_tag_id);
     var minifiedTag = document.getElementById(core.options.minified_output_tag_id);
@@ -123,56 +131,60 @@ function(require){
       minifiedTag.innerText = '';
       
     function callback(){
-      
-      if(indexes[listName]++ < exportList[listName].files.length){
-        getSrc( exportList[listName], callback);
+      var wrappedFileObj = exportList[groupName].files[indexes[groupName]];
+      if(indexes[groupName]++ < exportList[groupName].files.length){
+        getSrc(exportList[groupName], callback);
 
         
         tempOutput = '\n' + this.responseText;
-        if(exportList[listName].compress == true)
+        if(wrappedFileObj.compress == true)
           tempOutput = compress(this.responseText);
         
         //look at the scope of the xhr request for more info
-        exportList[listName].output += tempOutput;  
-        indexes[listName];
+        exportList[groupName].output += tempOutput;  
+        //indexes[groupName];
       }
       /*note the postfix incrementation. I am able to detect completion, yet not
       index out of bounds b/c of this. By checking for OOB here I am able to 
       detect completion*/
-      if(indexes[listName] == exportList[listName].files.length){
-        console.log(listName + ' Done'); 
+      if(indexes[groupName] == exportList[groupName].files.length){
+        console.log(groupName + ' Done'); 
         /*Output to console*/
-        console.log('----- ' + listName + '----- ');
-        console.log(exportList[listName].output);
+        console.log('----- ' + groupName + '----- ');
+        console.log(exportList[groupName].output);
+        
+        /*Download, if requested*/
+        if(core.options.download_minified == true)
+          location.href = "data:application/octet-stream," + encodeURIComponent(exportList[groupName].output);
         
         /*output to DOM*/
-        if(exportList[listName].compress == false){
+        if(exportList[groupName].compress == false){
           var coutTag = document.getElementById(core.options.cout_tag_id);
           if(coutTag)
-            coutTag.innerText += exportList[listName].output + '\n';
+            coutTag.innerText += exportList[groupName].output + '\n';
         }else{
           var minifiedTag = document.getElementById(core.options.minified_output_tag_id);
           if(minifiedTag)
-            minifiedTag.innerText += exportList[listName].output + '\n';
+            minifiedTag.innerText += exportList[groupName].output + '\n';
         }
         
         
         
         
         /*Should make this configurable b/c people hate popups*/
-        //window.open('http://localhost/structureJS/structureJS/export.html?exports=' + processFileOutputForHtml( exportList[listName].output) );
+        //window.open('http://localhost/structureJS/pmi/export.html?exports=' + processFileOutputForHtml( exportList[groupName].output) );
         
         /*Reset variables*/
         /*For subsequent exports in the same session we need to clear our objects
         because they remain in memory*/
-        delete indexes[listName];
-        delete exportList[listName];
+        delete indexes[groupName];
+        delete exportList[groupName];
       }
 
     }
 
-    if(exportList[listName]){
-      getSrc(exportList[listName], callback);
+    if(exportList[groupName]){
+      getSrc(exportList[groupName], callback);
     }
   }
   
@@ -181,7 +193,7 @@ function(require){
     var xhr = new XMLHttpRequest();
     xhr.onload = callback;
     if(indexes[obj.name] < obj.files.length){
-      xhr.open('get',  obj.files[indexes[obj.name]], true);
+      xhr.open('get',  obj.files[indexes[obj.name]]['filename'], true);
       xhr.send();
     }
     
@@ -216,7 +228,7 @@ function(require){
         /*Download compressed file*/
         if(core.options.download_minified == true)
           location.href = "data:application/octet-stream," + encodeURIComponent(combinedSrc);        
-        
+        //window.open('http://localhost/structureJS/pmi/export.html?exports=' + combinedSrc); 
         //reset variables  
         /*For subsequent exports in the same session we need to clear our objects
         because they remain in memory*/
@@ -225,7 +237,7 @@ function(require){
         exportList = {}; // b/c '*' gets put in here & needs to be cleared
         /*note we don't clear exports because it is a copy of wholeProject which
         never */
-        //window.open('http://localhost/structureJS/structureJS/export.html?exports=' + combinedSrc);    
+            
       }
     }
     if(fileName)

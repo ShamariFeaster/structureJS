@@ -44,6 +44,7 @@
       /*Create 'add' checkbx and bind filename to checkbx with data atrrib*/
       checkbx = document.createElement('input'); checkbx.type = 'checkbox'; checkbx.value = 'add';
       checkbx.setAttribute('data-file', files[i]);
+      checkbx.setAttribute('class', 'file-selector-checkbox-add');
       /*Set listener on checkbx that adds/removes to targets list when checked*/
       checkbx.addEventListener('click', function(e){
         var name = e.target.getAttribute('data-file');
@@ -59,6 +60,7 @@
       /*Create 'add' checkbx and bind filename to checkbx with data atrrib*/
       checkbx = document.createElement('input'); checkbx.type = 'checkbox'; checkbx.value = 'compressed';
       checkbx.setAttribute('data-file', files[i]);
+      checkbx.setAttribute('class', 'file-selector-checkbox-compress');
       /*Set listener on checkbx that adds/removes to targets list when checked*/
       checkbx.addEventListener('click', function(e){
         var name = e.target.getAttribute('data-file');
@@ -313,6 +315,30 @@
     
     _$('#export_project').node().addEventListener('click', function(){
       doExport(true, _member);
+    });
+    
+    _$('#add_all').node().addEventListener('click', function(){
+      var checkboxes = document.querySelectorAll('.file-selector-checkbox-add');
+      var event = document.createEvent('Event');
+      event.initEvent('click', true, true);
+      for(var i = 0; i < checkboxes.length; i++){
+        checkboxes[i].checked = !checkboxes[i].checked;
+        checkboxes[i].dispatchEvent(event);
+      }
+    });
+    
+    _$('#compress_all').node().addEventListener('click', function(){
+      var checkboxes = document.querySelectorAll('.file-selector-checkbox-compress');
+      var event = document.createEvent('Event');
+      event.initEvent('click', true, true);
+      for(var i = 0; i < checkboxes.length; i++){
+        checkboxes[i].checked = !checkboxes[i].checked;
+        checkboxes[i].dispatchEvent(event);
+      }
+    });
+    
+    _$('#download_output').node().addEventListener('click', function(e){
+      _core.options.download_minified = e.target.checked;
     });
   });
   

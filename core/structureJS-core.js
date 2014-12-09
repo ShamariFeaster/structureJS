@@ -8,6 +8,21 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     minified_output_tag_id : 'minified',
     log_priority : 3
   },
+  /*
+  @property state
+  @type Object
+  */
+  state : {
+    dependencyTree : {}, 
+    resolvedFileList : [],
+    pmiFileOrder : [],
+    declaredGroups: [],
+    groupsInTLC : {},
+    pmiFilesSelectedForExport : '',    /*TODO: for consistency, change to array*/
+    modules : {},
+    cache : { structureJSTag : null },
+    doneQueue : []
+  },
   
   /*@StartDeploymentRemove*/
   /*module_base is removed. let directory_aliases stand in its place. this is more
@@ -38,22 +53,6 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     hasRemotes : false,
     exportInitiated : false
   },
-  /*
-  @property state
-  @type Object
-  */
-  state : {
-    dependencyTree : {}, 
-    resolvedFileList : [],
-    pmiFileOrder : [],
-    declaredGroups: [],
-    groupsInTLC : {},
-    pmiFilesSelectedForExport : '',    /*TODO: for consistency, change to array*/
-    modules : {},
-    cache : { structureJSTag : null },
-    doneQueue : []
-  },
-
   //Constants
   NAME : 'structureJS-core',
   UGLYFY_FILENAME : 'uglifyjs.min',
