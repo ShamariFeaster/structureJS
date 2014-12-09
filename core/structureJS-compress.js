@@ -18,7 +18,7 @@ function(require){
   var indexes = {};
   var exportList = {};
   var thisGroup = null;
-  var exportProject = false;
+  var _exportProject = false;
   var fileName = '';
   var orderedGroupComponents = null;
   /* '.' DOES NOT match newlines, so here's the workaround */
@@ -84,7 +84,7 @@ function(require){
     for(var i = 0; i < exports.length; i++){
 
       if(exports[i].trim() == '*'){
-        exportProject = true;
+        _exportProject = true;
         /*copy it because we consume it below and cannot be reused in subsequent 
         exports*/
         exports = wholeProject.slice(0);
@@ -194,16 +194,16 @@ function(require){
       /*this.onload.fileName is myself but with state data attached by my calling
       function. This may be a better way to handle the synchronization & separation 
       I use on group exports*/
-      if(this.onload.fileName == core.config.core_base + core.NAME+'.js' ){
+      if(this.onload.fileName == core.config.core_base + core.NAME + '.js' ){
         console.log('PROCESSIG DEPLOY VERSION');
         text = text.replace(deploymentRegex,'');
       }
       combinedSrc += compress(text);
       var nextFile = exports.shift();
 
-      if(nextFile)
-        getProjectSrc( nextFile, callback);
-      else{
+      if(nextFile) {
+        getProjectSrc( core.config.project_base + nextFile, callback);
+      } else{
         
         /*Output to console*/
         console.log(combinedSrc);
@@ -221,7 +221,7 @@ function(require){
         /*For subsequent exports in the same session we need to clear our objects
         because they remain in memory*/
         combinedSrc = '';
-        exportProject = false;
+        _exportProject = false;
         exportList = {}; // b/c '*' gets put in here & needs to be cleared
         /*note we don't clear exports because it is a copy of wholeProject which
         never */
@@ -238,7 +238,7 @@ function(require){
     /*Super sweet way of attaching per-call data to callback function
     to give each callback a state*/
     xhr.onload.fileName = fileName;
-    xhr.onreadystatechange=function() {
+    xhr.onreadystatechange = function() {
     if (xhr.readyState === 4){   //if complete
         if(xhr.status !== 200){  //check if "OK" (200)
           console.log(fileName + ' not found. Probably a bootstrap - trying one level above.');
@@ -259,9 +259,9 @@ function(require){
   var executeExport = function(){
     parseFileList();
     /*Driver*/
-    if(exportProject == true){
+    if(_exportProject == true){
       if(core.flags['hasRemotes'] == false)
-        combineProjectSrcFiles( core.config.core_base +core.NAME+'.js' );
+        combineProjectSrcFiles( core.config.core_base + core.NAME + '.js' );
       else{
         throw 'Error: Cannot minify because you are using remote files in the project'; 
       }

@@ -135,8 +135,9 @@
         if(inputName != 'target')
         _$('#' + inputName).node().value = project[inputName];
       }
-      setLastOpened(name);
+      
       doExport(false, _member);
+      setLastOpened(name);
     }
     
   }
@@ -161,6 +162,7 @@
     projectData.project_manifest_location =  _$('#project_manifest_location').node().value || './';
     projectData.project_manifest_name =  _$('#project_manifest_name').node().value || 'manifest';
     projectData.project_config_name =  _$('#project_config_name').node().value || 'config';
+    projectData.project_config_location =  _$('#project_config_location').node().value || projectData.project_manifest_location;
     
     if(projectData.name == ''){
       notifyUser('Project Must Have A Name');
@@ -235,6 +237,7 @@
     exportData.manifest_loc =  _$('#project_manifest_location').node().value || './';
     exportData.manifest_name =  _$('#project_manifest_name').node().value || 'manifest';
     exportData.config_name =  _$('#project_config_name').node().value || 'config';
+    exportData.config_loc =  _$('#project_config_location').node().value || exportData.manifest_loc;
     return exportData;
   }
   
