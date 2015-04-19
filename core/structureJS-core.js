@@ -221,15 +221,15 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
 
     /*Before returning replace 'remote' with remote URL*/
     if(new RegExp(remoteRegex).test(input)){
-      results = input.replace(remoteRegex, this.REMOTE_URL) + '.js';
+      results = input.replace(remoteRegex, this.REMOTE_URL);
       this.flags['hasRemotes'] = true;
     }else if(cdnRegex.test(input)){
-      results = input + '.js';
+      results = input;
       this.flags['hasRemotes'] = true;
     }else{
       /*FIX: we never check that defaultBase is defined. We could end up with
             'undefined' in the path*/
-      results = defaultBase + input + '.js';
+      results = defaultBase + input;
     }
       
     var matchResult = null;  
@@ -243,7 +243,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
       matchResult = regex.exec(input);
       
       if(matchResult != null){
-        results = input.replace(matchResult[0], aliases[alias]) + '.js';
+        results = input.replace(matchResult[0], aliases[alias]);
       }
     }
     return results;
@@ -262,10 +262,11 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
       String - use input as file path
   @return {String} a transformed file path
   */
-  resolveFilePath : function(input){
+  resolveFilePath : function(input, fileExtension){
     if(typeof input == 'undefined')
       return '';
-    var config = this.config;
+    var config = this.config,
+        fileExtension = (typeof fileExtension == 'undefined') ? '' : fileExtension;
     
     var filePath = '';
     
@@ -281,9 +282,9 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     }else if(input == this.UGLYFY_FILENAME){
      filePath = this.resolveDirectoryAliases(input, config.core_base + config.core_lib_folder);//config.core_base + input + '.js';
     }else if(typeof input === 'string'){
-      filePath = this.resolveDirectoryAliases(input, config.project_base )//config.global_base + input + '.js';
+      filePath = this.resolveDirectoryAliases(input, config.project_base)//config.global_base + input + '.js';
     }
-    return filePath;
+    return filePath + fileExtension;
   },
   /*
   
@@ -324,13 +325,13 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
     it here. Shallow leaves us with empty exports*/
     _this.state['resolvedFileList'] = globals.concat(_this.state['resolvedFileList']);
     for(var i = 0; i < _this.state['resolvedFileList'].length; i++){
-      _this.state['pmiFileOrder'].push(_this.resolveFilePath( _this.state['resolvedFileList'][i] ));
+      _this.state['pmiFileOrder'].push(_this.resolveFilePath( _this.state['resolvedFileList'][i],'.js' ));
     }
 
     //recursive callback
     var callback = function(){
       var __this = (typeof _this == 'undefined') ? this : _this; 
-      var filePath = __this.resolveFilePath( __this.state['resolvedFileList'].shift() );
+      var filePath = __this.resolveFilePath( __this.state['resolvedFileList'].shift(),'.js' );
       /*Still files to load up*/
       if(filePath){
         __this.loadScript(filePath, callback);
@@ -343,7 +344,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
       }
     }
      console.log('This Files Before Loading: ',_this.state['resolvedFileList']);
-    _this.loadScript( this.resolveFilePath( _this.state['resolvedFileList'].shift() ) , callback );
+    _this.loadScript( this.resolveFilePath( _this.state['resolvedFileList'].shift(),'.js' ) , callback );
     
   },
   loadStyles : function(onComplete){
@@ -356,7 +357,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
       var nextSheet = sheets.shift();
       /*Still files to load up*/
       if(nextSheet){
-        _this.loadStyle(nextSheet, styleCallback);
+        _this.loadStyle(__this.resolveFilePath(nextSheet), styleCallback);
       }else{
         if(typeof onComplete != 'undefined'){
           onComplete.call(null);
@@ -365,7 +366,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
       }
     }
     
-    _this.loadStyle(sheets.shift(), styleCallback)
+    _this.loadStyle(this.resolveFilePath(sheets.shift()), styleCallback)
   },
   
   /*
