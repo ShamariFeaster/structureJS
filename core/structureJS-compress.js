@@ -21,6 +21,8 @@ function(require){
   var _exportProject = false;
   var fileName = '';
   var orderedGroupComponents = null;
+  var _coreFilename = core.config.core_base + core.NAME + '.js';
+  var _dependencyFilename = core.config.core_base + core.DEPENDENCY + '.js';
   /* '.' DOES NOT match newlines, so here's the workaround */
   var deploymentRegex = /\/\*@StartDeploymentRemove\*\/[\S\s]*?\/\*@EndDeploymentRemove\*\//g;
   /*Configure
@@ -137,8 +139,9 @@ function(require){
 
         
         tempOutput = '\n' + this.responseText;
-        if(wrappedFileObj.compress == true)
+        if(wrappedFileObj.compress == true){
           tempOutput = compress(this.responseText);
+        }
         
         //look at the scope of the xhr request for more info
         exportList[groupName].output += tempOutput;  
@@ -206,15 +209,23 @@ function(require){
       /*this.onload.fileName is myself but with state data attached by my calling
       function. This may be a better way to handle the synchronization & separation 
       I use on group exports*/
-      if(this.onload.fileName == core.config.core_base + core.NAME + '.js' ){
+      if(this.onload.fileName == core.config.core_base + core.NAME + '.js' 
+        && core.options.preProcess == true){
         console.log('PROCESSIG DEPLOY VERSION');
         text = text.replace(deploymentRegex,'');
       }
-      combinedSrc += compress(text);
+      if(core.options.minify == true){
+        combinedSrc += compress(text);
+      }else{
+        combinedSrc += text;
+      }
+      
       var nextFile = exports.shift();
-
+      
       if(nextFile) {
-        getProjectSrc( core.config.project_base + nextFile, callback);
+        nextFile = (nextFile == _coreFilename || nextFile == _dependencyFilename) ?
+                  nextFile : core.config.project_base + nextFile;
+        getProjectSrc( nextFile, callback);
       } else{
         
         /*Output to console*/
@@ -272,15 +283,28 @@ function(require){
     parseFileList();
     /*Driver*/
     if(_exportProject == true){
-      if(core.flags['hasRemotes'] == false)
-        combineProjectSrcFiles( core.config.core_base + core.NAME + '.js' );
+      
+      if(core.flags['hasRemotes'] == false){
+
+        if(core.options.preProcess == false){
+          exports.unshift(_dependencyFilename);
+        }
+        
+        exports.unshift(_coreFilename);
+        
+        combineProjectSrcFiles( exports.shift() );
+      }
       else{
         throw 'Error: Cannot minify because you are using remote files in the project'; 
       }
+      
     }else{
       for(var name in exportList){
-        if(name)
+        
+        if(name){
           combineSrcFiles( name );
+        }
+        
       }
     }
   };

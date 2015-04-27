@@ -80,7 +80,7 @@ function(require){
       it here. Shallow leaves us with empty exports*/
       core.state['resolvedFileList'] = globals.concat(core.state['resolvedFileList']);
       for(var i = 0; i < core.state['resolvedFileList'].length; i++){
-        core.state['pmiFileOrder'].push(core.resolveFilePath( core.state['resolvedFileList'][i] ));
+        core.state['pmiFileOrder'].push(core.resolveFilePath( core.state['resolvedFileList'][i], '.js' ));
       }
       
       console.log('Export Order: ' + core.state['pmiFileOrder']);
@@ -89,7 +89,7 @@ function(require){
     /*This loads up drivers for exportation.*/
     loadDrivers : function(){
 
-      core.loadScript( core.resolveFilePath( 'uglifyjs.min' ),
+      core.loadScript( core.resolveFilePath( 'uglifyjs.min', '.js' ),
             function(){
               console.log('Finished Export Load. Clearing _files');
       });

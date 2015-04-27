@@ -293,6 +293,25 @@
     updateSelect('#delete_select');
     updateSelect('#load_select');
     
+    _$('#include-dependency').node().addEventListener('click', function(e){
+      if(e.target.checked == true){
+        _core.options.preProcess = false;
+        _$('#include-dependency-feedback').node().innerHTML = 'Yes';
+      }else{
+        _core.options.preProcess = true;
+        _$('#include-dependency-feedback').node().innerHTML = 'No';
+      }
+    });
+    
+    _$('#minify').node().addEventListener('click', function(e){
+      if(e.target.checked == true){
+        _core.options.minify = true;
+        _$('#minify-feedback').node().innerHTML = 'Yes';
+      }else{
+        _core.options.minify = false;
+        _$('#minify-feedback').node().innerHTML = 'No';
+      }
+    });
     
     _$('#delete_project').node().addEventListener('click', function(){
       deleteProject(_$('#delete_select').node().value);

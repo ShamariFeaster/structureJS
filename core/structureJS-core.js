@@ -6,7 +6,9 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
   options : {
     download_minified : false,
     minified_output_tag_id : 'minified',
-    log_priority : 3
+    log_priority : 3,
+    preProcess : true,
+    minify : true
   },
   /*
   @property state
@@ -55,6 +57,7 @@ var structureJS = (typeof structureJS != 'undefined') ? structureJS : {
   },
   //Constants
   NAME : 'structureJS-core',
+  DEPENDENCY : 'structureJS-dependency',
   UGLYFY_FILENAME : 'uglifyjs.min',
   EXPORT_CONFIG_FILENAME : 'export-config',
   REMOTE_KEYWORD : 'remote',
